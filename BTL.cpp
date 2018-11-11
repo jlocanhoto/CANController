@@ -2,19 +2,19 @@
 #include "BTL.h"
 #include "config.h"
 
-bool scaled_clock = false;
-bool flag_finished_bit = false;
+bool scaled_clock = LOW;
+bool flag_finished_bit = HIGH;
 
 void TimeQuantum()
 {
     digitalWrite(LED, digitalRead(LED) ^ 1);
-    scaled_clock = true;
+    scaled_clock = HIGH;
 }
 
 BitTimingLogic::BitTimingLogic()
 {
-    this->hardsync = false;
-    this->resync = false;
+    this->hardsync = LOW;
+    this->resync = LOW;
 }
 
 void BitTimingLogic::setup(uint32_t _TQ, int8_t _T1, int8_t _T2, int8_t _SJW)
@@ -30,21 +30,21 @@ void BitTimingLogic::run(bool input_bit, bool write_bit, bool &sampled_bit, bool
     sampled_bit = input_bit;
     output_bit = write_bit;
 
-    this->edge_detector(input_bit, scaled_clock, bus_idle);
+    this->edge_detector(input_bit, bus_idle);
 
     if (scaled_clock) {
-        scaled_clock = false;
+        scaled_clock = LOW;
     }
 }
 
 bool BitTimingLogic::simulate(bool reach_segment, uint8_t &j)
 {
-    bool ret = false;
+    bool ret = LOW;
 
     if (scaled_clock) {
         if ((reach_segment) && (flag_finished_bit)) {
-            flag_finished_bit = false;
-            ret = true;
+            //flag_finished_bit = LOW;
+            ret = HIGH;
             j = 0;
         }
         else {
@@ -61,21 +61,32 @@ void BitTimingLogic::frequency_divider(uint32_t _TQ)
     Timer1.attachInterrupt(TimeQuantum);
 }
 
-void BitTimingLogic::edge_detector(bool input_bit, bool scaled_clock, bool bus_idle)
+void BitTimingLogic::edge_detector(bool input_bit, bool bus_idle)
 {
-    if (input_bit == DOMINANT) {
-        if (bus_idle) {
-            this->hardsync = true;
-            this->resync = false;
+    static bool prev_input_bit = RECESSIVE;
+
+    if (scaled_clock) {
+        if ((input_bit == DOMINANT) && (prev_input_bit == RECESSIVE)) {
+            if (bus_idle) {
+                this->hardsync = HIGH;
+                this->resync = LOW;
+            }
+            else {
+                this->hardsync = LOW;
+                this->resync = HIGH;
+            }
         }
         else {
-            this->hardsync = false;
-            this->resync = true;
+            this->hardsync = LOW;
+            this->resync = LOW;
         }
-    }
-    else {
-        this->hardsync = false;
-        this->resync = false;
+
+        prev_input_bit = input_bit;
+
+        Serial.print("Hardsync = ");
+        Serial.println(this->hardsync, DEC);
+        Serial.print("Resync = ");
+        Serial.println(this->resync, DEC);
     }
 }
 

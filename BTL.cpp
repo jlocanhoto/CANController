@@ -25,12 +25,12 @@ void BitTimingLogic::setup(uint32_t _TQ, int8_t _T1, int8_t _T2, int8_t _SJW)
     this->frequency_divider(_TQ);
 }
 
-void BitTimingLogic::run(bool input_bit, bool write_bit, bool &sampled_bit, bool &output_bit)
+void BitTimingLogic::run(bool input_bit, bool write_bit, bool &sampled_bit, bool &output_bit, bool bus_idle, bool &sample_point, bool &writing_point)
 {
     sampled_bit = input_bit;
     output_bit = write_bit;
 
-    this->
+    this->edge_detector(input_bit, flag_TQ, bus_idle);
 
     if (flag_TQ) {
         flag_TQ = false;
@@ -61,9 +61,22 @@ void BitTimingLogic::frequency_divider(uint32_t _TQ)
     Timer1.attachInterrupt(TimeQuantum);
 }
 
-void BitTimingLogic::edge_detector(bool scaled_clock, bool bus_idle)
+void BitTimingLogic::edge_detector(bool input_bit, bool scaled_clock, bool bus_idle)
 {
-
+    if (input_bit == DOMINANT) {
+        if (bus_idle) {
+            this->hardsync = true;
+            this->resync = false;
+        }
+        else {
+            this->hardsync = false;
+            this->resync = true;
+        }
+    }
+    else {
+        this->hardsync = false;
+        this->resync = false;
+    }
 }
 
 void BitTimingLogic::bit_segmenter(bool &sample_point, bool &writing_point)

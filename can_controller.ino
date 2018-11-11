@@ -1,9 +1,9 @@
 #include "BTL.h"
 
 // sequência de bits do frame de input
-bool input[]      = {false, true, false, true, false, true};
+bool input[]      = {LOW, HIGH, LOW, HIGH, LOW, HIGH};
 // sequência de bits do frame de input
-bool output[]     = {false, true, false, false, true, true};
+bool output[]     = {LOW, HIGH, LOW, LOW, HIGH, HIGH};
 // posição do bit segmentado em que ocorre o respectivo bit de input
 uint8_t seg_pos[] = {  0  ,  0  ,  0  ,  0  ,   0  ,  0  };
 

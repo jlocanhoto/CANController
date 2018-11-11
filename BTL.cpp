@@ -13,7 +13,8 @@ void TimeQuantum()
 
 BitTimingLogic::BitTimingLogic()
 {
-
+    this->hardsync = false;
+    this->resync = false;
 }
 
 void BitTimingLogic::setup(uint32_t _TQ, int8_t _T1, int8_t _T2, int8_t _SJW)

@@ -19,4 +19,10 @@ class BitTimingLogic {
         bool simulate(bool reach_segment, uint8_t &j);
 };
 
+enum {
+    SYNC_SEG,
+    TSEG1,
+    TSEG2
+};
+
 #endif

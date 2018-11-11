@@ -2,13 +2,13 @@
 #include "BTL.h"
 #include "config.h"
 
-bool flag_TQ = false;
+bool scaled_clock = false;
 bool flag_finished_bit = false;
 
 void TimeQuantum()
 {
     digitalWrite(LED, digitalRead(LED) ^ 1);
-    flag_TQ = true;
+    scaled_clock = true;
 }
 
 BitTimingLogic::BitTimingLogic()
@@ -30,10 +30,10 @@ void BitTimingLogic::run(bool input_bit, bool write_bit, bool &sampled_bit, bool
     sampled_bit = input_bit;
     output_bit = write_bit;
 
-    this->edge_detector(input_bit, flag_TQ, bus_idle);
+    this->edge_detector(input_bit, scaled_clock, bus_idle);
 
-    if (flag_TQ) {
-        flag_TQ = false;
+    if (scaled_clock) {
+        scaled_clock = false;
     }
 }
 
@@ -41,7 +41,7 @@ bool BitTimingLogic::simulate(bool reach_segment, uint8_t &j)
 {
     bool ret = false;
 
-    if (flag_TQ) {
+    if (scaled_clock) {
         if ((reach_segment) && (flag_finished_bit)) {
             flag_finished_bit = false;
             ret = true;

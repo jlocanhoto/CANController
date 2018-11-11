@@ -24,8 +24,11 @@ void loop()
     bool input_bit = input[i];
     //bool write_bit = digitalRead(...);
     bool write_bit = output[i];
-    bool output_bit;
-    bool sampled_bit;
+    static bool output_bit = false;
+    static bool sampled_bit = false;
+    static bool bus_idle = false;
+    static bool sample_point = false;
+    static bool writing_point = false;
 
     if (BTL.simulate((j == seg_pos[i]), j)) {
         if (i < 6) {
@@ -33,7 +36,7 @@ void loop()
         }
     }
 
-    BTL.run(input_bit, write_bit, sampled_bit, output_bit);
+    BTL.run(input_bit, write_bit, sampled_bit, output_bit, bus_idle, sample_point, writing_point);
 
     if (i != old_i) {
         Serial.print(sampled_bit, DEC);

@@ -8,7 +8,7 @@
 #define T1  8
 #define T2 -7
 
-#define DOMINANT false
-#define RECESSIVE true
+#define DOMINANT    LOW
+#define RECESSIVE   HIGH
 
 #endif

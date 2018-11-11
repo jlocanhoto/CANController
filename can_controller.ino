@@ -1,7 +1,7 @@
 #include "BTL.h"
 
 // sequência de bits do frame de input
-bool input[]      = {false, true, true, true, false, true};
+bool input[]      = {false, true, false, true, false, true};
 // sequência de bits do frame de input
 bool output[]     = {false, true, false, false, true, true};
 // posição do bit segmentado em que ocorre o respectivo bit de input
@@ -24,27 +24,27 @@ void loop()
     bool input_bit = input[i];
     //bool write_bit = digitalRead(...);
     bool write_bit = output[i];
-    static bool output_bit = false;
-    static bool sampled_bit = false;
-    static bool bus_idle = false;
-    static bool sample_point = false;
-    static bool writing_point = false;
-
+    static bool output_bit = LOW;
+    static bool sampled_bit = LOW;
+    static bool bus_idle = HIGH;
+    static bool sample_point = LOW;
+    static bool writing_point = LOW;
+    
     if (BTL.simulate((j == seg_pos[i]), j)) {
         if (i < 6) {
+            if (i == 1) {
+                bus_idle = LOW;
+            }
+
             i++;
         }
     }
 
-    BTL.run(input_bit, write_bit, sampled_bit, output_bit, bus_idle, sample_point, writing_point);
-
     if (i != old_i) {
-        Serial.print(sampled_bit, DEC);
-        if (i <= 5) {
-            Serial.print(", ");
-        }
-        else {
-            Serial.println();
-        }
+        BTL.run(input_bit, write_bit, sampled_bit, output_bit, bus_idle, sample_point, writing_point);
+
+        Serial.print("sampled_bit = ");
+        Serial.println(sampled_bit, DEC);
+        Serial.println();
     }
 }

@@ -1,17 +1,18 @@
-void setup() {
+int count, countLimit1, countLimit2, writingPoint, hardSync, reSync, sampledBit, phaseError, compensates, RX, samplePoint;
+char controleEstado;
+
+void _setup() {
   #define SYNC_SEG '0'
   #define TSEG1 '1'
   #define TSEG2 '2'
   #define sjw 1
   #define t1 8
   #define t2 -7
-  
-  int count, countLimit1, countLimit2, writingPoint, hardSync, reSync, sampledBit, phaseError, compensates;
-  char controleEstado;
+
   controleEstado = SYNC_SEG;  
 }
 
-void loop() {
+void _loop() {
   switch(controleEstado){
     case SYNC_SEG:
     {
@@ -88,7 +89,7 @@ void loop() {
       else
       {
         count = 0;
-        writing_point = 1;
+        writingPoint = 1;
         controleEstado = TSEG1;
       }
      }

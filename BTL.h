@@ -16,7 +16,7 @@ class BitTimingLogic {
         BitTimingLogic();
         void setup(uint32_t _TQ, int8_t _T1, int8_t _T2, int8_t _SJW);
         void run(bool input_bit, bool write_bit, bool &sample_bit, bool &output_bit);
-        bool update_simulation(bool reach_segment, uint8_t &j);
+        bool simulate(bool reach_segment, uint8_t &j);
 };
 
 #endif

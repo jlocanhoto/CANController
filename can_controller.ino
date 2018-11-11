@@ -27,7 +27,7 @@ void loop()
     bool output_bit;
     bool sampled_bit;
 
-    if (BTL.update_simulation((j == seg_pos[i]), j)) {
+    if (BTL.simulate((j == seg_pos[i]), j)) {
         if (i < 6) {
             i++;
         }

@@ -29,12 +29,14 @@ void BitTimingLogic::run(bool input_bit, bool write_bit, bool &sampled_bit, bool
     sampled_bit = input_bit;
     output_bit = write_bit;
 
+    this->
+
     if (flag_TQ) {
         flag_TQ = false;
     }
 }
 
-bool BitTimingLogic::update_simulation(bool reach_segment, uint8_t &j)
+bool BitTimingLogic::simulate(bool reach_segment, uint8_t &j)
 {
     bool ret = false;
 

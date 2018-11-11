@@ -19,24 +19,29 @@ void setup()
 void loop()
 {
     static uint8_t i = 0, j = 0;
-    
+    uint8_t old_i = i;
     //bool input_bit = digitalRead(...);
     bool input_bit = input[i];
-    bool output_bit;
-    bool sampled_bit;
     //bool write_bit = digitalRead(...);
     bool write_bit = output[i];
+    bool output_bit;
+    bool sampled_bit;
+
+    if (BTL.update_simulation((j == seg_pos[i]), j)) {
+        if (i < 6) {
+            i++;
+        }
+    }
 
     BTL.run(input_bit, write_bit, sampled_bit, output_bit);
-    
-    if (i < 6) {
+
+    if (i != old_i) {
         Serial.print(sampled_bit, DEC);
-        if (i < 5) {
+        if (i <= 5) {
             Serial.print(", ");
         }
         else {
             Serial.println();
         }
-        i++;
     }
 }

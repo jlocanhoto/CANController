@@ -20,7 +20,7 @@ class BitTimingLogic {
 };
 
 enum {
-    SYNC_SEG,
+    SYNC_SEG = 0,
     TSEG1,
     TSEG2
 };

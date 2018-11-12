@@ -11,13 +11,19 @@ bool output[]     = {LOW, HIGH, LOW, LOW, HIGH, HIGH};
 |     0    | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
 *****************************************************************************/
 // posição do bit segmentado em que ocorre o respectivo bit de input
-uint8_t seg_pos[] = {  0  ,  0  ,  14  ,  0  ,   0  ,  0  };
+uint8_t seg_pos[] = {  0  ,  0  ,  9  ,  0  ,   9  ,  0  };
 
 BitTimingLogic BTL;
 
 void setup()
 {
-    pinMode(LED, OUTPUT);
+    pinMode(LED,      OUTPUT);
+    pinMode(TQ_CLK,   OUTPUT);
+    pinMode(HARDSYNC, OUTPUT);
+    pinMode(RESYNC,   OUTPUT);
+    pinMode(STATE_0,  OUTPUT);
+    pinMode(STATE_1,  OUTPUT);
+
     Serial.begin(115200);
     BTL.setup(TQ, T1, T2, SJW);
 }

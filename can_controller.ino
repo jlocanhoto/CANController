@@ -4,8 +4,14 @@
 bool input[]      = {LOW, HIGH, LOW, HIGH, LOW, HIGH};
 // sequência de bits do frame de input
 bool output[]     = {LOW, HIGH, LOW, LOW, HIGH, HIGH};
+
+/*****************************************************************************
+| -------------------------------- BIT TIME -------------------------------- |
+| SYNC_SEG |             TSEG1             |              TSEG2              |
+|     0    | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
+*****************************************************************************/
 // posição do bit segmentado em que ocorre o respectivo bit de input
-uint8_t seg_pos[] = {  0  ,  0  ,  0  ,  0  ,   0  ,  0  };
+uint8_t seg_pos[] = {  0  ,  5  ,  5  ,  0  ,   0  ,  0  };
 
 BitTimingLogic BTL;
 
@@ -21,30 +27,28 @@ void loop()
     static uint8_t i = 0, j = 0;
     uint8_t old_i = i;
     //bool input_bit = digitalRead(...);
-    bool input_bit = input[i];
+    static bool input_bit = input[i];
     //bool write_bit = digitalRead(...);
-    bool write_bit = output[i];
+    static bool write_bit = output[i];
     static bool output_bit = LOW;
     static bool sampled_bit = LOW;
     static bool bus_idle = HIGH;
     static bool sample_point = LOW;
     static bool writing_point = LOW;
     
-    if (BTL.simulate((j == seg_pos[i]), j)) {
-        if (i < 6) {
-            if (i == 1) {
-                bus_idle = LOW;
-            }
+    if (i < 6) {
+        if (BTL.simulate(seg_pos[i], j)) {            
+            Serial.println();
+            Serial.print(i, DEC);
+            Serial.print(". sampled_bit = ");
+            Serial.println(sampled_bit, DEC);
+            Serial.println();
 
             i++;
+            input_bit = input[i];
+            write_bit = output[i];
         }
-    }
 
-    if (i != old_i) {
         BTL.run(input_bit, write_bit, sampled_bit, output_bit, bus_idle, sample_point, writing_point);
-
-        Serial.print("sampled_bit = ");
-        Serial.println(sampled_bit, DEC);
-        Serial.println();
     }
 }

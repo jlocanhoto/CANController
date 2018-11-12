@@ -28,13 +28,19 @@ void BitTimingLogic::setup(uint32_t _TQ, int8_t _T1, int8_t _T2, int8_t _SJW)
 
 void BitTimingLogic::run(bool simulated, bool input_bit, bool write_bit, bool &sampled_bit, bool &output_bit, bool &bus_idle, bool &sample_point, bool &writing_point)
 {
+    static bool prev_input_bit = RECESSIVE;
+
     sampled_bit = input_bit;
     output_bit = write_bit;    
 
     if (simulated) {
         Serial.println("<RUN>");
-        this->edge_detector(input_bit, bus_idle);
+        this->edge_detector(prev_input_bit, input_bit, bus_idle);
         this->bit_segmenter(sample_point, writing_point);
+
+        if (flag_finished_bit) {
+            prev_input_bit = input_bit;
+        }
         
         simulated = false;
     }
@@ -43,24 +49,24 @@ void BitTimingLogic::run(bool simulated, bool input_bit, bool write_bit, bool &s
 bool BitTimingLogic::simulate(uint8_t pos, uint8_t &j, boolean &simulated)
 {
     bool ret = false;
-
-    if (scaled_clock) {
+    
+    if (flag_finished_bit) {
+        flag_finished_bit = false;
+        flag_sync = false;
+        ret = true;
+        j = 0;
+    }
+    else if (scaled_clock) {
         simulated = true;
         Serial.println("<SIMULATE>");
 
-        if (flag_finished_bit) {
-            flag_finished_bit = false;
-            flag_sync = false;
-            ret = true;
-            j = 0;
-        }
-        
         if (j < pos) {
             j++;
         }
         else if (j == pos) {
             flag_sync = true;
             j++;
+            Serial.println("flag_sync");
         }
 
         scaled_clock = LOW;
@@ -75,9 +81,11 @@ void BitTimingLogic::frequency_divider(uint32_t _TQ)
     Timer1.attachInterrupt(TimeQuantum);
 }
 
-void BitTimingLogic::edge_detector(bool input_bit, bool &bus_idle)
+void BitTimingLogic::edge_detector(bool prev_input_bit, bool input_bit, bool &bus_idle)
 {
-    static bool prev_input_bit = RECESSIVE;
+    Serial.print(prev_input_bit, DEC);
+    Serial.print(" -> ");
+    Serial.println(input_bit, DEC);
 
     if (flag_sync) {
         if ((input_bit == DOMINANT) && (prev_input_bit == RECESSIVE)) {
@@ -85,15 +93,16 @@ void BitTimingLogic::edge_detector(bool input_bit, bool &bus_idle)
                 this->hardsync = true;
                 this->resync = false;
                 bus_idle = false;
+                Serial.println("hardsync");
             }
             else {
                 this->hardsync = false;
                 this->resync = true;
+                Serial.println("resync");
             }
         }
 
         flag_sync = false;
-        prev_input_bit = input_bit;
     }
     else {
         this->hardsync = false;
@@ -137,6 +146,7 @@ void BitTimingLogic::bit_segmenter(bool &sample_point, bool &writing_point)
                 writing_point = LOW;                
 
                 if (this->resync) {
+                    this->resync = false;
                     Serial.print(">> RESYNC (");
                     Serial.print(p_count, DEC);
                     Serial.println(")");
@@ -160,6 +170,7 @@ void BitTimingLogic::bit_segmenter(bool &sample_point, bool &writing_point)
                 sample_point = LOW;
 
                 if (this->resync) {
+                    this->resync = false;
                     Serial.print(">> RESYNC (");
                     Serial.print(p_count, DEC);
                     Serial.println(")");
@@ -170,8 +181,7 @@ void BitTimingLogic::bit_segmenter(bool &sample_point, bool &writing_point)
                 if (p_count < count_limit2) {
                     p_count++;
                 }
-
-                if (p_count == count_limit2) {
+                else if (p_count == count_limit2) {
                     Serial.print(phase_error, DEC);
                     Serial.print(" => ");
                     Serial.println(phase_error == -p_count, DEC);

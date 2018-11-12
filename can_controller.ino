@@ -1,7 +1,7 @@
 #include "BTL.h"
 
 // sequência de bits do frame de input
-bool input[]      = {LOW, HIGH, LOW, HIGH, LOW, HIGH};
+bool input[]      = {HIGH, HIGH, LOW, HIGH, LOW, HIGH};
 // sequência de bits do frame de input
 bool output[]     = {LOW, HIGH, LOW, LOW, HIGH, HIGH};
 

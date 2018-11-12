@@ -9,8 +9,8 @@ class BitTimingLogic {
         int8_t limit_TSEG2;
         int8_t sjw;
         void frequency_divider(uint32_t TQ);
-        void edge_detector(bool input_bit, bool &bus_idle);
-        void bit_segmenter(bool &sample_point, bool &writing_point);
+        void edge_detector(bool &unlock_edge_detector, bool input_bit, bool &bus_idle);
+        void bit_segmenter(bool &sample_point, bool &writing_point, bool &unlock_edge_detector);
 
     public:
         BitTimingLogic();

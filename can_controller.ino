@@ -11,7 +11,7 @@ bool output[]     = {LOW, HIGH, LOW, LOW, HIGH, HIGH};
 |     0    | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
 *****************************************************************************/
 // posição do bit segmentado em que ocorre o respectivo bit de input
-uint8_t seg_pos[] = {  0  ,  5  ,  5  ,  0  ,   0  ,  0  };
+uint8_t seg_pos[] = {  0  ,  0  ,  5  ,  0  ,   0  ,  0  };
 
 BitTimingLogic BTL;
 

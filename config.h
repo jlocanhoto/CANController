@@ -1,6 +1,14 @@
 #ifndef CONFIG_H_INCLUDE
 #define CONFIG_H_INCLUDE
 
+#define SIMULATION
+
+#define TQ_CLK   3
+#define HARDSYNC 5
+#define RESYNC   6
+#define STATE_0  8
+#define STATE_1  9
+
 #define LED 13
 
 #define TQ 1000000 // time quantum, in microseconds

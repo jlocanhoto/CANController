@@ -15,8 +15,8 @@ class BitTimingLogic {
     public:
         BitTimingLogic();
         void setup(uint32_t _TQ, int8_t _T1, int8_t _T2, int8_t _SJW);
-        void run(boolean simulated, bool input_bit, bool write_bit, bool &sample_bit, bool &output_bit, bool &bus_idle, bool &sample_point, bool &writing_point);
-        bool simulate(uint8_t pos, uint8_t &j, boolean &simulated);
+        void run(boolean &tq, bool input_bit, bool write_bit, bool &sample_bit, bool &output_bit, bool &bus_idle, bool &sample_point, bool &writing_point);
+        bool nextTQ(uint8_t pos, uint8_t &j, boolean &tq);
 };
 
 enum {

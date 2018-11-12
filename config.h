@@ -1,7 +1,8 @@
 #ifndef CONFIG_H_INCLUDE
 #define CONFIG_H_INCLUDE
 
-#define SIMULATION
+#define SIMULATION  true
+#define LOGGING     true
 
 #define TQ_CLK   3
 #define HARDSYNC 5
@@ -9,12 +10,13 @@
 #define STATE_0  8
 #define STATE_1  9
 
-#define LED 13
-
-#ifdef SIMULATION
+#if SIMULATION
     #define TQ 1000000 // time quantum, in microseconds
 #else
     #define TQ 10000    // time quantum = 10 ms, in microseconds
+    
+    #define INPUT_BIT 10
+    #define WRITE_BIT 11
 #endif
 
 #define SJW 1

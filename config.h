@@ -11,7 +11,12 @@
 
 #define LED 13
 
-#define TQ 1000000 // time quantum, in microseconds
+#ifdef SIMULATION
+    #define TQ 1000000 // time quantum, in microseconds
+#else
+    #define TQ 10000    // time quantum = 10 ms, in microseconds
+#endif
+
 #define SJW 1
 #define T1  8
 #define T2 -7

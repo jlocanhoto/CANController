@@ -26,27 +26,26 @@ void BitTimingLogic::setup(uint32_t _TQ, int8_t _T1, int8_t _T2, int8_t _SJW)
     this->frequency_divider(_TQ);
 }
 
-void BitTimingLogic::run(bool input_bit, bool write_bit, bool &sampled_bit, bool &output_bit, bool &bus_idle, bool &sample_point, bool &writing_point)
+void BitTimingLogic::run(bool simulated, bool input_bit, bool write_bit, bool &sampled_bit, bool &output_bit, bool &bus_idle, bool &sample_point, bool &writing_point)
 {
-    static bool unlock_edge_detector = true;
-
     sampled_bit = input_bit;
     output_bit = write_bit;    
 
-    if (scaled_clock) {
+    if (simulated) {
         Serial.println("<RUN>");
-        this->edge_detector(unlock_edge_detector, input_bit, bus_idle);
-        this->bit_segmenter(sample_point, writing_point, unlock_edge_detector);
-
-        scaled_clock = LOW;
+        this->edge_detector(input_bit, bus_idle);
+        this->bit_segmenter(sample_point, writing_point);
+        
+        simulated = false;
     }
 }
 
-bool BitTimingLogic::simulate(uint8_t pos, uint8_t &j)
+bool BitTimingLogic::simulate(uint8_t pos, uint8_t &j, boolean &simulated)
 {
     bool ret = false;
 
     if (scaled_clock) {
+        simulated = true;
         Serial.println("<SIMULATE>");
 
         if (flag_finished_bit) {
@@ -55,13 +54,16 @@ bool BitTimingLogic::simulate(uint8_t pos, uint8_t &j)
             ret = true;
             j = 0;
         }
-        else if (j < pos) {
+        
+        if (j < pos) {
             j++;
         }
         else if (j == pos) {
             flag_sync = true;
             j++;
         }
+
+        scaled_clock = LOW;
     }
 
     return ret;
@@ -73,7 +75,7 @@ void BitTimingLogic::frequency_divider(uint32_t _TQ)
     Timer1.attachInterrupt(TimeQuantum);
 }
 
-void BitTimingLogic::edge_detector(bool &unlock_edge_detector, bool input_bit, bool &bus_idle)
+void BitTimingLogic::edge_detector(bool input_bit, bool &bus_idle)
 {
     static bool prev_input_bit = RECESSIVE;
 
@@ -110,7 +112,7 @@ void initial_values_bit_segmenter(int8_t t1, int8_t t2, int8_t &p_count, bool &w
     count_limit2 = t2;
 }
 
-void BitTimingLogic::bit_segmenter(bool &sample_point, bool &writing_point, bool &unlock_edge_detector)
+void BitTimingLogic::bit_segmenter(bool &sample_point, bool &writing_point)
 {
     static uint8_t state = SYNC_SEG;
     static int8_t p_count = 0;
@@ -135,7 +137,9 @@ void BitTimingLogic::bit_segmenter(bool &sample_point, bool &writing_point, bool
                 writing_point = LOW;                
 
                 if (this->resync) {
-                    Serial.println(">> RESYNC");
+                    Serial.print(">> RESYNC (");
+                    Serial.print(p_count, DEC);
+                    Serial.println(")");
                     count_limit1 += min(this->sjw, p_count);
                 }
                 
@@ -156,7 +160,9 @@ void BitTimingLogic::bit_segmenter(bool &sample_point, bool &writing_point, bool
                 sample_point = LOW;
 
                 if (this->resync) {
-                    Serial.println(">> RESYNC");
+                    Serial.print(">> RESYNC (");
+                    Serial.print(p_count, DEC);
+                    Serial.println(")");
                     phase_error = min(this->sjw, -p_count);
                     count_limit2 -= phase_error;
                 }
@@ -166,6 +172,9 @@ void BitTimingLogic::bit_segmenter(bool &sample_point, bool &writing_point, bool
                 }
 
                 if (p_count == count_limit2) {
+                    Serial.print(phase_error, DEC);
+                    Serial.print(" => ");
+                    Serial.println(phase_error == -p_count, DEC);
                     if (phase_error == -p_count) {
                         Serial.println("it was SYNC_SEG");
                         initial_values_bit_segmenter(this->limit_TSEG1, 0, p_count, writing_point, sample_point, state, count_limit1, count_limit2);
@@ -175,7 +184,6 @@ void BitTimingLogic::bit_segmenter(bool &sample_point, bool &writing_point, bool
                     }
 
                     flag_finished_bit = true;
-                    unlock_edge_detector = true;
                 }
 
                 break;

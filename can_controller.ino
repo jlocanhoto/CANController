@@ -11,7 +11,7 @@ bool output[]     = {LOW, HIGH, LOW, LOW, HIGH, HIGH};
 |     0    | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
 *****************************************************************************/
 // posição do bit segmentado em que ocorre o respectivo bit de input
-uint8_t seg_pos[] = {  0  ,  0  ,  5  ,  0  ,   0  ,  0  };
+uint8_t seg_pos[] = {  0  ,  0  ,  14  ,  0  ,   0  ,  0  };
 
 BitTimingLogic BTL;
 
@@ -25,7 +25,6 @@ void setup()
 void loop()
 {
     static uint8_t i = 0, j = 0;
-    uint8_t old_i = i;
     //bool input_bit = digitalRead(...);
     static bool input_bit = input[i];
     //bool write_bit = digitalRead(...);
@@ -35,9 +34,10 @@ void loop()
     static bool bus_idle = HIGH;
     static bool sample_point = LOW;
     static bool writing_point = LOW;
+    bool simulated = false;
     
     if (i < 6) {
-        if (BTL.simulate(seg_pos[i], j)) {            
+        if (BTL.simulate(seg_pos[i], j, simulated)) {            
             Serial.println();
             Serial.print(i, DEC);
             Serial.print(". sampled_bit = ");
@@ -49,6 +49,6 @@ void loop()
             write_bit = output[i];
         }
 
-        BTL.run(input_bit, write_bit, sampled_bit, output_bit, bus_idle, sample_point, writing_point);
+        BTL.run(simulated, input_bit, write_bit, sampled_bit, output_bit, bus_idle, sample_point, writing_point);
     }
 }

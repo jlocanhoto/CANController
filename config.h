@@ -2,7 +2,7 @@
 #define CONFIG_H_INCLUDE
 
 #define SIMULATION  true
-#define LOGGING     true
+#define LOGGING     false
 
 #define TQ_CLK   3
 #define HARDSYNC 5

@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include "TimerOne.h"
 #include "BTL.h"
 #include "config.h"
@@ -50,7 +51,7 @@ void BitTimingLogic::run(bool &tq, bool input_bit, bool write_bit, bool &sampled
     }
 }
 
-bool BitTimingLogic::nextTQ(uint8_t pos, uint8_t &j, boolean &tq)
+bool BitTimingLogic::nextTQ(uint8_t pos, uint8_t &j, bool &tq)
 {
     bool ret = false;
     

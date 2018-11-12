@@ -1,3 +1,4 @@
+#include "config.h"
 #include "BTL.h"
 
 // sequência de bits do frame de input
@@ -6,7 +7,7 @@ bool input[]      = {LOW , HIGH, LOW , HIGH, LOW , HIGH, LOW };
 bool output[]     = {LOW , HIGH, LOW , LOW , HIGH, HIGH, LOW };
 
 // posição do bit segmentado em que ocorre o respectivo bit de input
-uint8_t seg_pos[] = {  0 ,  0  ,  15 ,  0  ,  8  ,  0  ,  1  };
+uint8_t seg_pos[] = {  0 ,  0  ,  8 ,  0  ,  8  ,  0  ,  1  };
 /*****************************************************************************
 | -------------------------------- BIT TIME -------------------------------- |
 | SYNC_SEG |             TSEG1             |              TSEG2              |
@@ -70,8 +71,5 @@ void loop()
         }
 
         BTL.run(tq, input_bit, write_bit, sampled_bit, output_bit, bus_idle, sample_point, writing_point);
-    }
-    else {
-        Serial.println("FINISHED");
     }
 }

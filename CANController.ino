@@ -76,9 +76,9 @@ void loop()
         
         Serial.print(digitalRead(TQ_CLK), DEC);
         Serial.print(" ");
-        Serial.print(digitalRead(INPUT_BIT)+2, DEC);
+        Serial.print(input_bit+2, DEC);
         Serial.print(" ");
-        Serial.print(digitalRead(BUS_IDLE)+4, DEC);
+        Serial.print(bus_idle+4, DEC);
         Serial.print(" ");
         Serial.print(digitalRead(HARDSYNC)+6, DEC);
         Serial.print(" ");

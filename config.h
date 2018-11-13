@@ -18,6 +18,7 @@
     
     #define INPUT_BIT 10
     #define WRITE_BIT 11
+    #define BUS_IDLE  12
 #endif
 
 #define SJW 1

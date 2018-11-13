@@ -27,21 +27,56 @@ void BitTimingLogic::setup(uint32_t _TQ, int8_t _T1, int8_t _T2, int8_t _SJW)
     this->frequency_divider(_TQ);
 }
 
+#if DEBUG
+void logging_title()
+{
+    Serial.println(".----------.----------------.-----------.-----------.--------.----------.-------------.--------------.---------------.");
+    Serial.println("| BUS IDLE | PREVIOUS INPUT | INPUT BIT | HARD SYNC | RESYNC |  STATE   | PHASE ERROR | SAMPLE POINT | WRITING POINT |");
+    Serial.println("|----------|----------------|-----------|-----------|--------|----------|-------------|--------------|---------------|");
+}
+
+void logging_fotter()
+{
+    Serial.println("'----------'----------------'-----------'-----------'--------'----------'-------------'--------------'---------------'");
+    Serial.println();
+}
+#endif
+
 void BitTimingLogic::run(bool &tq, bool input_bit, bool write_bit, bool &sampled_bit, bool &output_bit, bool &bus_idle, bool &sample_point, bool &writing_point)
 {
     static bool prev_input_bit = RECESSIVE;
 
     sampled_bit = input_bit;
-    output_bit = write_bit;    
+    output_bit = write_bit;
 
     if (tq) {
         #if LOGGING
         //Serial.println("<RUN>");
         Serial.println(bus_idle, DEC);
         #endif
+
+        #if DEBUG
+        logging_title();
+        Serial.print("|     ");
+        Serial.print(bus_idle, DEC);
+        Serial.print("    |        ");
+        Serial.print(prev_input_bit, DEC);
+        Serial.print("       |     ");
+        Serial.print(input_bit, DEC);
+        Serial.print("     |     ");
+        #endif
         
         this->edge_detector(prev_input_bit, input_bit, bus_idle);
         this->bit_segmenter(prev_input_bit, input_bit, sample_point, writing_point);
+
+        #if DEBUG
+        Serial.print("      |       ");
+        Serial.print(sample_point, DEC);
+        Serial.print("      |       ");
+        Serial.print(writing_point, DEC);
+        Serial.println("       |");
+        logging_fotter();
+        #endif
         
         tq = false;
         //digitalWrite(TQ_CLK, LOW);
@@ -162,6 +197,13 @@ void BitTimingLogic::bit_segmenter(bool &prev_input_bit, bool input_bit, bool &s
     int8_t phase_error = 127;
     bool transition = false;
 
+    #if DEBUG
+    Serial.print(this->hardsync, DEC);
+    Serial.print("     |    ");
+    Serial.print(this->resync, DEC);
+    Serial.print("   | ");
+    #endif
+
     if (this->hardsync) {
         this->hardsync = false;
         sync = true;
@@ -172,6 +214,17 @@ void BitTimingLogic::bit_segmenter(bool &prev_input_bit, bool input_bit, bool &s
         
         #if LOGGING
         Serial.println(">> HARD_SYNC");
+        #endif
+
+        #if DEBUG
+        Serial.print("SYNC_SEG");
+        Serial.print(" |     ");
+        
+        if (p_count >= 0 && p_count < 10) {
+          Serial.print(" ");  
+        }
+        
+        Serial.print(p_count, DEC);
         #endif
         
         initial_values_bit_segmenter(this->limit_TSEG1, 0, p_count, writing_point, sample_point, state, count_limit1, count_limit2);
@@ -190,14 +243,30 @@ void BitTimingLogic::bit_segmenter(bool &prev_input_bit, bool input_bit, bool &s
                 Serial.println("state = SYNC_SEG");
                 #endif
 
+                #if DEBUG
+                Serial.print("SYNC_SEG");
+                Serial.print(" |     ");
+                
+                if (p_count >= 0 && p_count < 10) {
+                  Serial.print(" ");  
+                }
+                
+                Serial.print(p_count, DEC);
+                #endif
+
                 initial_values_bit_segmenter(this->limit_TSEG1, 0, p_count, writing_point, sample_point, state, count_limit1, count_limit2);
+                
                 break;
             case TSEG1:
                 digitalWrite(STATE_0, HIGH);
                 digitalWrite(STATE_1, LOW);
         
                 #if LOGGING
-                Serial.println("state = TSEG1");
+                Serial.println("state = TSEG_1");
+                #endif
+
+                #if DEBUG
+                Serial.print(" TSEG_1 ");
                 #endif
 
                 writing_point = LOW;
@@ -219,8 +288,18 @@ void BitTimingLogic::bit_segmenter(bool &prev_input_bit, bool input_bit, bool &s
 
                     count_limit1 += min(this->sjw, p_count);
                 }
+
+                #if DEBUG
+                Serial.print(" |     ");
                 
-                if (p_count == count_limit1) {
+                if (p_count >= 0 && p_count < 10) {
+                  Serial.print(" ");  
+                }
+                
+                Serial.print(p_count, DEC);
+                #endif
+                
+                if (p_count == count_limit1) {                    
                     p_count = this->limit_TSEG2;
                     state = TSEG2;
                 }
@@ -251,15 +330,23 @@ void BitTimingLogic::bit_segmenter(bool &prev_input_bit, bool input_bit, bool &s
                 }
         
                 #if LOGGING
-                Serial.println("state = TSEG2");
+                Serial.println("state = TSEG_2");
                 #endif
 
-                if (p_count < count_limit2) {
-                    p_count++;
+                #if DEBUG
+                Serial.print(" TSEG_2 ");
+                Serial.print(" |     ");
+                
+                if (p_count >= 0 && p_count < 10) {
+                  Serial.print(" ");  
                 }
                 
+                Serial.print(p_count, DEC);
+                #endif
+
                 if (this->resync) {
                     this->resync = false;
+                    
                     digitalWrite(RESYNC, HIGH);
                 
                     #if LOGGING
@@ -270,6 +357,10 @@ void BitTimingLogic::bit_segmenter(bool &prev_input_bit, bool input_bit, bool &s
 
                     phase_error = min(this->sjw, -p_count);
                     count_limit2 -= phase_error;
+                }
+                
+                if (p_count < count_limit2) {
+                    p_count++;
                 }
                 
                 if (p_count == count_limit2) {

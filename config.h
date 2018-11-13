@@ -2,8 +2,9 @@
 #define CONFIG_H_INCLUDE
 
 #define SIMULATION  false
+#define DEBUG       true
 #define LOGGING     false
-#define SERIAL_PLOT true
+#define SERIAL_PLOT false
 
 #define TQ_CLK   3
 #define HARDSYNC 5
@@ -14,7 +15,7 @@
 #if SIMULATION
     #define TQ 1000000 // time quantum, in microseconds
 #else
-    #define TQ 10000    // time quantum = 10 ms, in microseconds
+    #define TQ 1000000    // time quantum = 10 ms, in microseconds
     
     #define INPUT_BIT 10
     #define WRITE_BIT 11

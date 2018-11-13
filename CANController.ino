@@ -7,7 +7,7 @@ bool input[]      = {LOW , HIGH, LOW , HIGH, LOW , HIGH, LOW };
 bool output[]     = {LOW , HIGH, LOW , LOW , HIGH, HIGH, LOW };
 
 // posição do bit segmentado em que ocorre o respectivo bit de input
-uint8_t seg_pos[] = {  0 ,  0  ,  8 ,  0  ,  8  ,  0  ,  1  };
+uint8_t seg_pos[] = {  0 ,  0  ,  8  ,  0  ,  8  ,  0  ,  1  };
 /*****************************************************************************
 | -------------------------------- BIT TIME -------------------------------- |
 | SYNC_SEG |             TSEG1             |              TSEG2              |

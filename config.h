@@ -1,8 +1,9 @@
 #ifndef CONFIG_H_INCLUDE
 #define CONFIG_H_INCLUDE
 
-#define SIMULATION  true
+#define SIMULATION  false
 #define LOGGING     false
+#define SERIAL_PLOT false
 
 #define TQ_CLK   3
 #define HARDSYNC 5

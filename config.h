@@ -1,7 +1,7 @@
 #ifndef CONFIG_H_INCLUDE
 #define CONFIG_H_INCLUDE
 
-#define SIMULATION  false
+#define SIMULATION  true
 #define DEBUG       true
 #define LOGGING     false
 #define SERIAL_PLOT false

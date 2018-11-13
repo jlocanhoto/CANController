@@ -5,7 +5,7 @@
 
 bool scaled_clock = LOW;
 bool flag_finished_bit = false;
-bool flag_sync = true;
+bool flag_sync = false;
 
 void TimeQuantum()
 {
@@ -76,6 +76,12 @@ void BitTimingLogic::run(bool &tq, bool input_bit, bool write_bit, bool &sampled
         Serial.print(writing_point, DEC);
         Serial.println("       |");
         logging_fotter();
+        #endif
+
+        #if SIMULATION
+        if (flag_finished_bit) {
+            prev_input_bit = input_bit;
+        }
         #endif
         
         tq = false;
@@ -166,9 +172,11 @@ void BitTimingLogic::edge_detector(bool &prev_input_bit, bool input_bit, bool &b
                 Serial.println("resync");
                 #endif
             }
-    
+
             prev_input_bit = DOMINANT;
         }
+        
+        flag_sync = false;
     }
 }
 
@@ -298,7 +306,7 @@ void BitTimingLogic::bit_segmenter(bool &prev_input_bit, bool input_bit, bool &s
                 Serial.print(p_count, DEC);
                 #endif
                 
-                if (p_count == count_limit1) {                    
+                if (p_count == count_limit1) {
                     p_count = this->limit_TSEG2;
                     state = TSEG2;
                 }
@@ -315,7 +323,10 @@ void BitTimingLogic::bit_segmenter(bool &prev_input_bit, bool input_bit, bool &s
                     Serial.println(")");
                     #endif
 
+                    #if !SIMULATION
                     prev_input_bit = input_bit;
+                    #endif
+                    
                     sample_point = HIGH;
                 }
                 else {

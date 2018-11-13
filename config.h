@@ -2,8 +2,7 @@
 #define CONFIG_H_INCLUDE
 
 #define SIMULATION  true
-#define DEBUG       true
-#define LOGGING     false
+#define LOGGING     true
 #define SERIAL_PLOT false
 
 #define TQ_CLK   3

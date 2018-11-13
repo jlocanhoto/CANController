@@ -27,7 +27,7 @@ void BitTimingLogic::setup(uint32_t _TQ, int8_t _T1, int8_t _T2, int8_t _SJW)
     this->frequency_divider(_TQ);
 }
 
-#if DEBUG
+#if LOGGING
 void logging_title()
 {
     Serial.println(".----------.----------------.-----------.-----------.--------.----------.-------------.--------------.---------------.");
@@ -51,11 +51,6 @@ void BitTimingLogic::run(bool &tq, bool input_bit, bool write_bit, bool &sampled
 
     if (tq) {
         #if LOGGING
-        //Serial.println("<RUN>");
-        Serial.println(bus_idle, DEC);
-        #endif
-
-        #if DEBUG
         logging_title();
         Serial.print("|     ");
         Serial.print(bus_idle, DEC);
@@ -69,7 +64,7 @@ void BitTimingLogic::run(bool &tq, bool input_bit, bool write_bit, bool &sampled
         this->edge_detector(prev_input_bit, input_bit, bus_idle);
         this->bit_segmenter(prev_input_bit, input_bit, sample_point, writing_point);
 
-        #if DEBUG
+        #if LOGGING
         Serial.print("      |       ");
         Serial.print(sample_point, DEC);
         Serial.print("      |       ");
@@ -108,24 +103,12 @@ bool BitTimingLogic::nextTQ(uint8_t pos, uint8_t &j, bool &tq)
         
         #if SIMULATION
         
-        #if LOGGING
-        //Serial.println("<SIMULATE>");
-        Serial.print("j = ");
-        Serial.print(j, DEC);
-        Serial.print(" ? pos = ");
-        Serial.println(pos, DEC);
-        #endif
-
         if (j < pos) {
             j++;
         }
         else if (j == pos) {
             flag_sync = true;
             j++;
-
-            #if LOGGING
-            Serial.println("flag_sync");
-            #endif
         }
 
         #endif
@@ -144,12 +127,6 @@ void BitTimingLogic::frequency_divider(uint32_t _TQ)
 
 void BitTimingLogic::edge_detector(bool &prev_input_bit, bool input_bit, bool &bus_idle)
 {
-    #if LOGGING
-    Serial.print(prev_input_bit, DEC);
-    Serial.print(" -> ");
-    Serial.println(input_bit, DEC);
-    #endif
-
     if (flag_sync) {
         if ((input_bit == DOMINANT) && (prev_input_bit == RECESSIVE)) {
             if (bus_idle) {
@@ -159,18 +136,10 @@ void BitTimingLogic::edge_detector(bool &prev_input_bit, bool input_bit, bool &b
                 #if SIMULATION
                 bus_idle = false;
                 #endif
-    
-                #if LOGGING
-                Serial.println("hardsync");
-                #endif
             }
             else {
                 this->hardsync = false;
                 this->resync = true;
-    
-                #if LOGGING
-                Serial.println("resync");
-                #endif
             }
 
             prev_input_bit = DOMINANT;
@@ -182,12 +151,6 @@ void BitTimingLogic::edge_detector(bool &prev_input_bit, bool input_bit, bool &b
 
 void initial_values_bit_segmenter(int8_t t1, int8_t t2, int8_t &p_count, bool &writing_point, bool &sample_point, uint8_t &state, int8_t &count_limit1, int8_t &count_limit2)
 {
-    #if LOGGING
-    Serial.print(">> WRITING POINT (p_count = ");
-    Serial.print(p_count, DEC);
-    Serial.println(")");
-    #endif
-
     p_count = 0;
     writing_point = HIGH;
     sample_point = LOW;
@@ -204,7 +167,7 @@ void BitTimingLogic::bit_segmenter(bool &prev_input_bit, bool input_bit, bool &s
     static bool sync = false;
     int8_t phase_error = 127;
 
-    #if DEBUG
+    #if LOGGING
     Serial.print(this->hardsync, DEC);
     Serial.print("     |    ");
     Serial.print(this->resync, DEC);
@@ -218,12 +181,8 @@ void BitTimingLogic::bit_segmenter(bool &prev_input_bit, bool input_bit, bool &s
 
         digitalWrite(STATE_0, LOW);
         digitalWrite(STATE_1, LOW);
-        
-        #if LOGGING
-        Serial.println(">> HARD_SYNC");
-        #endif
 
-        #if DEBUG
+        #if LOGGING
         Serial.print("SYNC_SEG");
         Serial.print(" |     ");
         
@@ -245,14 +204,10 @@ void BitTimingLogic::bit_segmenter(bool &prev_input_bit, bool input_bit, bool &s
             case SYNC_SEG:
                 digitalWrite(STATE_0, LOW);
                 digitalWrite(STATE_1, LOW);
-        
-                #if LOGGING
-                Serial.println("state = SYNC_SEG");
-                #endif
 
                 initial_values_bit_segmenter(this->limit_TSEG1, 0, p_count, writing_point, sample_point, state, count_limit1, count_limit2);
 
-                #if DEBUG
+                #if LOGGING
                 Serial.print("SYNC_SEG");
                 Serial.print(" |     ");
                 
@@ -267,12 +222,8 @@ void BitTimingLogic::bit_segmenter(bool &prev_input_bit, bool input_bit, bool &s
             case TSEG1:
                 digitalWrite(STATE_0, HIGH);
                 digitalWrite(STATE_1, LOW);
-        
-                #if LOGGING
-                Serial.println("state = TSEG_1");
-                #endif
 
-                #if DEBUG
+                #if LOGGING
                 Serial.print(" TSEG_1 ");
                 #endif
 
@@ -286,17 +237,11 @@ void BitTimingLogic::bit_segmenter(bool &prev_input_bit, bool input_bit, bool &s
                     this->resync = false;
                     sync = true;
                     digitalWrite(RESYNC, HIGH);
-                
-                    #if LOGGING
-                    Serial.print(">> RESYNC (p_count = ");
-                    Serial.print(p_count, DEC);
-                    Serial.println(")");
-                    #endif
 
                     count_limit1 += min(this->sjw, p_count);
                 }
 
-                #if DEBUG
+                #if LOGGING
                 Serial.print(" |     ");
                 
                 if (p_count >= 0 && p_count < 10) {
@@ -317,12 +262,6 @@ void BitTimingLogic::bit_segmenter(bool &prev_input_bit, bool input_bit, bool &s
                 digitalWrite(STATE_1, HIGH);
 
                 if (p_count == this->limit_TSEG2) {
-                    #if LOGGING
-                    Serial.print(">> SAMPLE POINT (p_count = ");
-                    Serial.print(p_count, DEC);
-                    Serial.println(")");
-                    #endif
-
                     #if !SIMULATION
                     prev_input_bit = input_bit;
                     #endif
@@ -332,12 +271,8 @@ void BitTimingLogic::bit_segmenter(bool &prev_input_bit, bool input_bit, bool &s
                 else {
                   sample_point = LOW;
                 }
-        
-                #if LOGGING
-                Serial.println("state = TSEG_2");
-                #endif
 
-                #if DEBUG
+                #if LOGGING
                 Serial.print(" TSEG_2 ");
                 Serial.print(" |     ");
                 
@@ -352,12 +287,6 @@ void BitTimingLogic::bit_segmenter(bool &prev_input_bit, bool input_bit, bool &s
                     this->resync = false;
                     
                     digitalWrite(RESYNC, HIGH);
-                
-                    #if LOGGING
-                    Serial.print(">> RESYNC (p_count = ");
-                    Serial.print(p_count, DEC);
-                    Serial.println(")");
-                    #endif
 
                     phase_error = min(this->sjw, -p_count);
                     count_limit2 -= phase_error;
@@ -369,17 +298,8 @@ void BitTimingLogic::bit_segmenter(bool &prev_input_bit, bool input_bit, bool &s
                 }
                 
                 if (p_count == count_limit2) {
-                    #if LOGGING
-                    Serial.print(phase_error, DEC);
-                    Serial.print(" => ");
-                    Serial.println(phase_error == -p_count, DEC);
-                    #endif
 
                     if (phase_error == -p_count && !sync) {
-                        #if LOGGING
-                        Serial.println("it was SYNC_SEG");
-                        #endif
-
                         initial_values_bit_segmenter(this->limit_TSEG1, 0, p_count, writing_point, sample_point, state, count_limit1, count_limit2);
                     }
                     else {
@@ -393,9 +313,4 @@ void BitTimingLogic::bit_segmenter(bool &prev_input_bit, bool input_bit, bool &s
                 break;
         }
     }
-    
-    #if LOGGING
-    Serial.print("p_count = ");
-    Serial.println(p_count, DEC);
-    #endif
 }

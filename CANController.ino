@@ -65,14 +65,6 @@ void loop()
     
     if (i < sizeof(seg_pos)) {
         if (BTL.nextTQ(seg_pos[i], j, tq)) {
-            #if LOGGING
-            Serial.println();
-            Serial.print(i, DEC);
-            Serial.print(". sampled_bit = ");
-            Serial.println(sampled_bit, DEC);
-            Serial.println();
-            #endif
-
             #if SIMULATION
             i++;
             input_bit = input[i];
@@ -80,7 +72,8 @@ void loop()
             #endif
         }
 
-        #if SERIAL_PLOT & !LOGGING & !DEBUG
+        #if SERIAL_PLOT & !LOGGING
+        
         Serial.print(digitalRead(TQ_CLK), DEC);
         Serial.print(" ");
         Serial.print(digitalRead(INPUT_BIT)+2, DEC);
@@ -101,6 +94,7 @@ void loop()
         Serial.print(" ");
         Serial.println(16, DEC);
         Serial.print(" ");
+        
         #endif
         
         BTL.run(tq, input_bit, write_bit, sampled_bit, output_bit, bus_idle, sample_point, writing_point);

@@ -3,7 +3,7 @@
 
 #define SIMULATION  false
 #define LOGGING     false
-#define SERIAL_PLOT false
+#define SERIAL_PLOT true
 
 #define TQ_CLK   3
 #define HARDSYNC 5

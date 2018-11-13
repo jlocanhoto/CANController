@@ -80,7 +80,7 @@ void loop()
             #endif
         }
 
-        #if SERIAL_PLOT
+        #if SERIAL_PLOT & !LOGGING
         Serial.print(digitalRead(TQ_CLK), DEC);
         Serial.print(" ");
         Serial.print(digitalRead(INPUT_BIT)+2, DEC);

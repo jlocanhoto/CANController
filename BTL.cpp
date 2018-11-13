@@ -195,7 +195,6 @@ void BitTimingLogic::bit_segmenter(bool &prev_input_bit, bool input_bit, bool &s
     static int8_t count_limit1 = 0, count_limit2 = 0;
     static bool sync = false;
     int8_t phase_error = 127;
-    bool transition = false;
 
     #if DEBUG
     Serial.print(this->hardsync, DEC);
@@ -243,6 +242,8 @@ void BitTimingLogic::bit_segmenter(bool &prev_input_bit, bool input_bit, bool &s
                 Serial.println("state = SYNC_SEG");
                 #endif
 
+                initial_values_bit_segmenter(this->limit_TSEG1, 0, p_count, writing_point, sample_point, state, count_limit1, count_limit2);
+
                 #if DEBUG
                 Serial.print("SYNC_SEG");
                 Serial.print(" |     ");
@@ -253,8 +254,6 @@ void BitTimingLogic::bit_segmenter(bool &prev_input_bit, bool input_bit, bool &s
                 
                 Serial.print(p_count, DEC);
                 #endif
-
-                initial_values_bit_segmenter(this->limit_TSEG1, 0, p_count, writing_point, sample_point, state, count_limit1, count_limit2);
                 
                 break;
             case TSEG1:
@@ -316,13 +315,7 @@ void BitTimingLogic::bit_segmenter(bool &prev_input_bit, bool input_bit, bool &s
                     Serial.println(")");
                     #endif
 
-                    if (!sync) {
-                      prev_input_bit = input_bit;
-                    }
-                    else {
-                      sync = false;
-                    }
-
+                    prev_input_bit = input_bit;
                     sample_point = HIGH;
                 }
                 else {
@@ -357,6 +350,7 @@ void BitTimingLogic::bit_segmenter(bool &prev_input_bit, bool input_bit, bool &s
 
                     phase_error = min(this->sjw, -p_count);
                     count_limit2 -= phase_error;
+                    sync = (p_count+1 == count_limit2);
                 }
                 
                 if (p_count < count_limit2) {
@@ -370,7 +364,7 @@ void BitTimingLogic::bit_segmenter(bool &prev_input_bit, bool input_bit, bool &s
                     Serial.println(phase_error == -p_count, DEC);
                     #endif
 
-                    if (phase_error == -p_count) {
+                    if (phase_error == -p_count && !sync) {
                         #if LOGGING
                         Serial.println("it was SYNC_SEG");
                         #endif
@@ -381,6 +375,7 @@ void BitTimingLogic::bit_segmenter(bool &prev_input_bit, bool input_bit, bool &s
                         state = SYNC_SEG;
                     }
 
+                    sync = false;
                     flag_finished_bit = true;
                 }
 

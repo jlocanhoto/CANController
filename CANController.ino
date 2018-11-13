@@ -26,6 +26,12 @@ void setup()
     pinMode(STATE_0,  OUTPUT);
     pinMode(STATE_1,  OUTPUT);
 
+    #if !SIMULATION
+    pinMode(INPUT_BIT, INPUT);
+    pinMode(WRITE_BIT, INPUT);
+    pinMode(BUS_IDLE,  INPUT);
+    #endif
+    
     digitalWrite(TQ_CLK,   LOW);
     digitalWrite(HARDSYNC, LOW);
     digitalWrite(RESYNC,   LOW);
@@ -43,14 +49,16 @@ void loop()
     #if SIMULATION
     static bool input_bit = input[i];
     static bool write_bit = output[i];
+    static bool bus_idle = HIGH;
     #else
     bool input_bit = digitalRead(INPUT_BIT);
     bool write_bit = digitalRead(WRITE_BIT);
+    bool bus_idle  = digitalRead(BUS_IDLE);
     #endif
 
     static bool output_bit = LOW;
     static bool sampled_bit = LOW;
-    static bool bus_idle = HIGH;
+    
     static bool sample_point = LOW;
     static bool writing_point = LOW;
     bool tq = false;
@@ -65,11 +73,36 @@ void loop()
             Serial.println();
             #endif
 
+            #if SIMULATION
             i++;
             input_bit = input[i];
             write_bit = output[i];
+            #endif
         }
 
+        #if SERIAL_PLOT
+        Serial.print(digitalRead(TQ_CLK), DEC);
+        Serial.print(" ");
+        Serial.print(digitalRead(INPUT_BIT)+2, DEC);
+        Serial.print(" ");
+        Serial.print(digitalRead(BUS_IDLE)+4, DEC);
+        Serial.print(" ");
+        Serial.print(digitalRead(HARDSYNC)+6, DEC);
+        Serial.print(" ");
+        Serial.print(digitalRead(RESYNC)+8, DEC);
+        Serial.print(" ");
+        Serial.print(digitalRead(STATE_0)+10, DEC);
+        Serial.print(" ");
+        Serial.print(digitalRead(STATE_1)+10, DEC);
+        Serial.print(" ");
+        Serial.print(sample_point+12, DEC);
+        Serial.print(" ");
+        Serial.print(writing_point+14, DEC);
+        Serial.print(" ");
+        Serial.println(16, DEC);
+        Serial.print(" ");
+        #endif
+        
         BTL.run(tq, input_bit, write_bit, sampled_bit, output_bit, bus_idle, sample_point, writing_point);
     }
 }

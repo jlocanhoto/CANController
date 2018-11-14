@@ -12,9 +12,9 @@
 #define STATE_1  9
 
 #if SIMULATION
-    #define TQ 1000000 // time quantum, in microseconds
+    #define TQ 10000 // time quantum, in microseconds
 #else
-    #define TQ 1000000    // time quantum = 10 ms, in microseconds
+    #define TQ 10000 // time quantum, in microseconds
     
     #define INPUT_BIT 10
     #define WRITE_BIT 11

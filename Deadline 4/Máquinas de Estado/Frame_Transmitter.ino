@@ -279,6 +279,7 @@ void loop() {
     case BUS_OFF:
     {
         printf("WAIT SYSTEM RESET!!");
+        break;
     }    
   }
 }

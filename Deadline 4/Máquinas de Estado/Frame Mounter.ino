@@ -7,7 +7,7 @@
 
 int count, start_data, data_limit;
 int new_frame, IDE, ID[28], RTR, payload_idx, DLC[4], pt_counter, crc_ready, PAYLOAD[64], CRC_CALC[15]; //INPUTS
-int FRAME[32], frame_ready, crc_req, PARTIAL[103];// OUTPUTS
+int FRAME[128], frame_ready, crc_req, PARTIAL[103];// OUTPUTS
 char controleEstado;
 
 void setup() {
@@ -19,12 +19,14 @@ void loop() {
   switch(controleEstado){
     case INICIO:
     {
-        if(new_frame == 1 && IDE == 0) {
+        if(new_frame == 1) {
             frame_ready = 0;
-            controleEstado = BASE_FORMAT;
-        }
-        else if(new_frame == 1 && IDE == 1) {
-            controleEstado = EXTENDED_FORMAT;
+            if(IDE == 0) {
+                controleEstado = BASE_FORMAT;
+            }
+            else {
+                controleEstado = EXTENDED_FORMAT;
+            }  
         }
         break;
     }

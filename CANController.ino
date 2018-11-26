@@ -1,5 +1,10 @@
 #include "config.h"
+#include "Application.h"
+#include "Frame_Mounter.h"
+#include "Simulator.h"
+#include "CRC_Calculator.h"
 #include "BTL.h"
+#include "utils.h"
 
 // sequência de bits do frame de input
 bool input[]      = {LOW , HIGH, LOW , HIGH, LOW , HIGH, LOW };
@@ -18,8 +23,15 @@ uint8_t seg_pos[] = {  0 ,  0  ,  14  ,  0  ,  15  ,  0  ,  1  };
 
 BitTimingLogic BTL;
 
+typedef union data_frame {
+   bool frame[8];
+   uint8_t frame_bytes;
+} Data_Frame;
+
 void setup()
 {
+    Serial.begin(115200);
+    /*
     pinMode(TQ_CLK,   OUTPUT);
     pinMode(HARDSYNC, OUTPUT);
     pinMode(RESYNC,   OUTPUT);
@@ -38,12 +50,37 @@ void setup()
     digitalWrite(STATE_0,  LOW);
     digitalWrite(STATE_1,  LOW);
 
-    Serial.begin(115200);
     BTL.setup(TQ, T1, T2, SJW);
+    */
 }
 
 void loop()
 {
+    static bool new_frame = LOW;
+    static bool flag_random_frame = true;
+    static Splitted_Frame input_frame;
+    static Frame_Mounter frame_mounter;
+    static CRC_data crc_data;
+    static bool FRAME[MAX_FRAME_SIZE+CRC_SIZE+1] = { };
+
+    if (flag_random_frame) {
+        random_frame(input_frame, new_frame);
+        flag_random_frame = false;
+    }
+    new_frame = !frame_mounter.mount(new_frame, input_frame, crc_data, FRAME);
+    calculate_CRC(crc_data, FRAME);
+    
+    if (!new_frame) {
+        Serial.print("FRAME = ");
+        for (int i = 0; i < MAX_FRAME_SIZE; i++)
+        {
+            Serial.print(FRAME[i], DEC);
+        }
+        Serial.println();
+        delay(10000);
+    }
+
+    /*
     static uint8_t i = 0, j = 0;
     
     #if SIMULATION
@@ -99,4 +136,5 @@ void loop()
         
         BTL.run(tq, input_bit, write_bit, sampled_bit, output_bit, bus_idle, sample_point, writing_point);
     }
+    */
 }

@@ -8,7 +8,7 @@ void random_frame(Splitted_Frame &frame, bool &new_frame)
     if (new_frame == LOW) {
         frame.ID = 0x48D;
         frame.IDE = DOMINANT;
-        frame.RTR = RECESSIVE;
+        frame.RTR = DOMINANT;
         frame.PAYLOAD = 0x01;
         frame.PAYLOAD_SIZE = 0x01;
         frame.ACK_slot = RECESSIVE;

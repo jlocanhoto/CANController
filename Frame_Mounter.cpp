@@ -15,8 +15,7 @@ bool Frame_Mounter::mount(bool new_frame, Splitted_Frame &input_frame, CRC_Data 
     static Frame_Mounter_States state = INIT__Frame_Mounter__;
     static uint8_t start_data;
     static uint8_t data_limit;
-    static uint8_t pt_counter;
-
+    
     switch(state)
     {
         case INIT__Frame_Mounter__:
@@ -50,6 +49,8 @@ bool Frame_Mounter::mount(bool new_frame, Splitted_Frame &input_frame, CRC_Data 
                 FRAME[DLC_POS + i] = (input_frame.PAYLOAD_SIZE << i) & 0x8;
             }
 
+            crc_data.PT_COUNTER += (DLC_POS + DLC_SIZE);
+
             if (input_frame.RTR == DOMINANT) {
                 start_data = DATA_FIELD_POS;
                 data_limit = DATA_FIELD_POS + input_frame.PAYLOAD_SIZE * 8; //ver a função pra transformar o DLC pra inteiro em C++
@@ -58,7 +59,6 @@ bool Frame_Mounter::mount(bool new_frame, Splitted_Frame &input_frame, CRC_Data 
             else { // input_frame.RTR == RECESSIVE
                 data_limit = DATA_FIELD_POS;
                 
-                crc_data.PT_COUNTER = data_limit;
                 crc_data.crc_req = HIGH;
 
                 state = CRC_WAIT__Frame_Mounter__;
@@ -88,6 +88,8 @@ bool Frame_Mounter::mount(bool new_frame, Splitted_Frame &input_frame, CRC_Data 
                 FRAME[DLC_EXT_POS + i] = (input_frame.PAYLOAD_SIZE << i) & 0x8;
             }
 
+            crc_data.PT_COUNTER += (DLC_EXT_POS + DLC_SIZE);
+
             if (input_frame.RTR == DOMINANT) {
                 start_data = DATA_FIELD_EXT_POS;
                 data_limit = DATA_FIELD_EXT_POS + input_frame.PAYLOAD_SIZE * 8; //ver a função pra transformar o DLC pra inteiro em C++
@@ -96,7 +98,6 @@ bool Frame_Mounter::mount(bool new_frame, Splitted_Frame &input_frame, CRC_Data 
             else { // input_frame.RTR == RECESSIVE
                 data_limit = DATA_FIELD_EXT_POS;
 
-                crc_data.PT_COUNTER = data_limit;
                 crc_data.crc_req = HIGH;
 
                 state = CRC_WAIT__Frame_Mounter__;
@@ -109,7 +110,8 @@ bool Frame_Mounter::mount(bool new_frame, Splitted_Frame &input_frame, CRC_Data 
                 FRAME[i] = (input_frame.PAYLOAD >> payload_idx) & 0x01;
             }
 
-            crc_data.PT_COUNTER = data_limit;
+            crc_data.PT_COUNTER += (data_limit - start_data);
+
             crc_data.crc_req = HIGH;
             state = CRC_WAIT__Frame_Mounter__;
             break;

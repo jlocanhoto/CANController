@@ -65,7 +65,7 @@ void loop()
     static Splitted_Frame input_frame;
     static Frame_Mounter frame_mounter;
     static CRC_data crc_data;
-    static bool FRAME[MAX_FRAME_SIZE+CRC_SIZE+1] = { };
+    static bool FRAME[MAX_FRAME_SIZE+CRC_SIZE+1];
 
     if (flag_random_frame) {
         random_frame(input_frame, new_frame);

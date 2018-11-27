@@ -1,17 +1,19 @@
+#include "config.h"
 #include "Frame_Transmitter.h"
 #include "Error.h"
 
-Frame_Transmitter::Frame_Transmitter(Frame_Transmitter_Output &output)
+Frame_Transmitter::Frame_Transmitter(Frame_Transmitter_Data &output)
 {
     output.lost_arbitration = LOW;
     this->output = &output;
     this->state = INIT__Frame_Transmitter__;
 }
 
-void Frame_Transmitter::setup(Frame_Mounter_Output &frame_mounter, Bit_Stuffing_Writing_Output &bit_stuffing_wr, Error_Output &error, Decoder_Output &decoder)
+void Frame_Transmitter::setup(Frame_Mounter_Data &frame_mounter, Bit_Stuffing_Writing_Data &bit_stuffing_wr, Bit_Stuffing_Reading_Data &bit_stuffing_rd, Error_Data &error, Decoder_Data &decoder)
 {
     this->input.frame_mounter = &frame_mounter;
     this->input.bit_stuffing_wr = &bit_stuffing_wr;
+    this->input.bit_stuffing_rd = &bit_stuffing_rd;
     this->input.error = &error;
     this->input.decoder = &decoder;
 }
@@ -49,23 +51,18 @@ void Frame_Transmitter::run()
             this->output->stuffing_enable = LOW;
 
             if (!this->check_errors()) {
-                if (this->input.bit_stuffing_wr->arb_wp == HIGH) {
-                    if (this->input.decoder->ack == LOW) {
+                if (this->input.bit_stuffing_wr->arb_wr_pt == HIGH) {
+                    if (this->input.decoder->ack == DOMINANT) {
                         this->state = ACK__Frame_Transmitter__;
                     }
                     else if (this->input.frame_mounter->frame_ready == HIGH) {
                         this->output->stuffing_enable = HIGH;
-                        this->output->arb_output = FRAME[this->count];
+                        this->output->arb_output = this->input.frame_mounter->FRAME[this->count];
                         this->count++;
                         this->output->lost_arbitration = LOW;
                         this->output->eof = LOW;
 
-                        if (IDE == 0) {
-                            this->state = ARBITRATION_PHASE_STD__Frame_Transmitter__;
-                        }
-                        else {
-                            this->state = ARBITRATION_PHASE_EXT__Frame_Transmitter__;
-                        }        
+                        this->state = ARBITRATION_PHASE__Frame_Transmitter__;
                     }
                 }
             }
@@ -76,104 +73,50 @@ void Frame_Transmitter::run()
         {
             this->output->arb_output = this->input.decoder->ack;
 
-            if (this->input.bit_stuffing_wr->arb_wp == HIGH) {
+            if (this->input.bit_stuffing_wr->arb_wr_pt == HIGH) {
                 this->state = INIT__Frame_Transmitter__;
             }
             break;
         }
-        case ARBITRATION_PHASE_STD__Frame_Transmitter__:
+        case ARBITRATION_PHASE__Frame_Transmitter__:
         {
             if (!this->check_errors()) {
-                if (this->input.bit_stuffing_wr->arb_wp == HIGH) {
-                    this->output->arb_output = FRAME[this->count];
+                if (this->input.bit_stuffing_wr->arb_wr_pt == HIGH) {
+                    this->output->arb_output = this->input.frame_mounter->FRAME[this->count];
                     this->count++;
                 }
                 
-                if(new_sp == 1 && new_input != this->output->arb_output) {
+                if (this->input.bit_stuffing_rd->new_sample_pt == HIGH
+                    && this->input.bit_stuffing_rd->new_sampled_bit != this->output->arb_output) {
                     this->output->lost_arbitration = HIGH;
                     this->state = INIT__Frame_Transmitter__;
-                    break;
                 }
-                if(this->count == 13) {
-                    for (int i = 15; i <= 18; i++) {
-                        dlc[i-15] = FRAME[i];
-                    }
-                    data_limit = 18 + 8*int(dlc); //ver a função pra transformar o dlc pra inteiro em C++
-                    this->state = STANDARD__Frame_Transmitter__;
-                    break;
+                else if (this->count == this->input.frame_mounter->arb_limit + 1) {
+                    this->state = DATA_TO_END_PHASE__Frame_Transmitter__;
                 }
             }
             
             break;
         }
-        case ARBITRATION_PHASE_EXT__Frame_Transmitter__: 
+        case DATA_TO_END_PHASE__Frame_Transmitter__:
         {
             if (!this->check_errors()) {
-                if(this->input.bit_stuffing_wr->arb_wp == 1) {
-                    this->output->arb_output = FRAME[this->count];
-                    this->count++;
-                }
-                
-                if(new_sp == 1 && new_input != this->output->arb_output) {
-                    this->output->lost_arbitration = 1;
-                    this->state = INIT__Frame_Transmitter__;
-                    break;
-                }
-                
-                if(this->count == 33) {
-                    for (int i = 35; i <= 38; i++) {
-                        dlc[i-35] = FRAME[i];
-                    }
-                    data_limit = 38 + 8*int(dlc); //ver a função pra transformar o dlc pra inteiro em C++
-                    this->state = EXTENDED__Frame_Transmitter__;
-                    break;
-                }
-            }        
-            break;
-        }
-        case STANDARD__Frame_Transmitter__:
-        {
-            if (!this->check_errors()) {
-                if(this->input.bit_stuffing_wr->arb_wp == 1) {
-                    this->output->arb_output = FRAME[this->count];
+                if (this->input.bit_stuffing_wr->arb_wr_pt == HIGH) {
+                    this->output->arb_output = this->input.frame_mounter->FRAME[this->count];
                     this->count++;
                 }
 
-                if(new_sp == 1 && new_input != this->output->arb_output && this->count != data_limit + 16) { //this->count != ack slot
+                if (this->input.bit_stuffing_rd->new_sample_pt == HIGH
+                    && this->input.bit_stuffing_rd->new_sampled_bit != this->output->arb_output
+                    && this->count != this->input.frame_mounter->data_limit + ACK_SLOT_OFFSET + 1) { // this->count != ack slot
+                    
                     this->state = BIT_ERROR__Frame_Transmitter__;
-                    break;
                 }
-
-                if(this->count == data_limit + 16) {
-                    this->output->stuffing_enable = 0;
+                else if (this->count == this->input.frame_mounter->data_limit + ACK_SLOT_OFFSET + 1) {
+                    this->output->stuffing_enable = LOW;
                 }
-
-                if(this->count == data_limit + 29) { //this->count != ack slot
-                    this->output->eof = 1;
-                    this->state = INIT__Frame_Transmitter__;
-                }          
-            }        
-            break;
-        }
-        case EXTENDED__Frame_Transmitter__:
-        {
-            if (!this->check_errors()) {
-                if(this->input.bit_stuffing_wr->arb_wp == 1) {
-                    this->output->arb_output = FRAME[this->count];
-                    this->count++;
-                }
-
-                if(new_sp == 1 && new_input != this->output->arb_output && this->count != data_limit + 16) { //this->count != ack slot
-                    this->state = BIT_ERROR__Frame_Transmitter__;
-                    break;
-                }
-
-                if(this->count == data_limit + 16) {
-                    this->output->stuffing_enable = 0;
-                }
-
-                if(this->count == data_limit + 29) { //this->count != ack slot
-                    eof = 1;
+                else if (this->count == this->input.frame_mounter->data_limit + EOF_OFFSET + EOF_SIZE + IFS_SIZE + 1) {
+                    this->output->eof = HIGH;
                     this->state = INIT__Frame_Transmitter__;
                 }
             }
@@ -187,27 +130,31 @@ void Frame_Transmitter::run()
         }
         case SEND_ACTIVE_ERROR__Frame_Transmitter__:
         {
-            this->output->arb_output = 0;
+            this->output->arb_output = DOMINANT;
 
-            if(this->count < 6 && this->input.bit_stuffing_wr->arb_wp == 1) {
-                this->count++;
-            }
-            else if(this->count == 6 && this->input.bit_stuffing_wr->arb_wp == 1) {
-                this->output->arb_output = 1;
-                this->state = INIT__Frame_Transmitter__;
+            if (this->input.bit_stuffing_wr->arb_wr_pt == HIGH) {
+                if (this->count < 6) {
+                    this->count++;
+                }
+                else {
+                    this->output->arb_output = RECESSIVE;
+                    this->state = INIT__Frame_Transmitter__;
+                }
             }
             break;
         }
         case SEND_PASSIVE_ERROR__Frame_Transmitter__:
         {
-            this->output->arb_output = 1;
+            this->output->arb_output = RECESSIVE;
 
-            if(this->count < 6 && this->input.bit_stuffing_wr->arb_wp == 1) {
-                this->count++;
-            }
-            else if(this->count == 6 && this->input.bit_stuffing_wr->arb_wp == 1) {
-                this->output->arb_output = 1;
-                this->state = INIT__Frame_Transmitter__;
+            if (this->input.bit_stuffing_wr->arb_wr_pt == HIGH) {
+                if (this->count < 6) {
+                    this->count++;
+                }
+                else {
+                    this->output->arb_output = RECESSIVE;
+                    this->state = INIT__Frame_Transmitter__;
+                }
             }
             break;
         }

@@ -1,10 +1,12 @@
 #include "config.h"
 #include "Application.h"
 #include "Frame_Mounter.h"
+#include "Frame_Transmitter.h"
 #include "Simulator.h"
 #include "CRC_Calculator.h"
 #include "BTL.h"
 #include "utils.h"
+#include "datatypes/datatypes.h"
 
 // sequência de bits do frame de input
 bool input[]      = {LOW , HIGH, LOW , HIGH, LOW , HIGH, LOW };
@@ -22,6 +24,8 @@ uint8_t seg_pos[] = {  0 ,  0  ,  14  ,  0  ,  15  ,  0  ,  1  };
 *****************************************************************************/
 
 BitTimingLogic BTL;
+
+
 
 typedef union data_frame {
    bool frame[8];

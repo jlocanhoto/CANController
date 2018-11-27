@@ -3,8 +3,8 @@
 
 typedef struct bit_stuffing_reading_output {
     bool new_sampled_bit;
-    bool new_sample_point;
+    bool new_sample_pt;
     bool stuff_error;
-} Bit_Stuffing_Reading_Output;
+} Bit_Stuffing_Reading_Data;
 
 #endif

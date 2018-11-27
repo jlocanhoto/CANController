@@ -4,6 +4,6 @@
 typedef struct crc_calculator_output {
     uint16_t CRC;
     bool crc_ready;
-} CRC_Calculator_Output;
+} CRC_Calculator_Data;
 
 #endif

@@ -3,6 +3,6 @@
 
 typedef struct decoder_output {
     bool ack;
-} Decoder_Output;
+} Decoder_Data;
 
 #endif

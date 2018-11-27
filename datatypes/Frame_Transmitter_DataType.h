@@ -8,6 +8,6 @@ typedef struct frame_transmitter_output {
     bool stuffing_enable;
     bool arb_output;
     bool eof;
-} Frame_Transmitter_Output;
+} Frame_Transmitter_Data;
 
 #endif

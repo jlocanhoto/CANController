@@ -4,6 +4,6 @@
 typedef struct error_output {
     bool error_detected;
     uint8_t error_state;
-} Error_Output;
+} Error_Data;
 
 #endif

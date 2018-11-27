@@ -8,17 +8,18 @@ Frame_Transmitter::Frame_Transmitter(Frame_Transmitter_Output &output)
     this->state = INIT__Frame_Transmitter__;
 }
 
-void Frame_Transmitter::setup(Frame_Mounter_Output &frame_mounter, Bit_Stuffing_Reading_Output &bit_stuffing_rd, Error_Output &error)
+void Frame_Transmitter::setup(Frame_Mounter_Output &frame_mounter, Bit_Stuffing_Writing_Output &bit_stuffing_wr, Error_Output &error, Decoder_Output &decoder)
 {
     this->input.frame_mounter = &frame_mounter;
-    this->input.bit_stuffing_rd = &bit_stuffing_rd;
+    this->input.bit_stuffing_wr = &bit_stuffing_wr;
     this->input.error = &error;
+    this->input.decoder = &decoder;
 }
 
-void Frame_Transmitter::errors_check()
+bool Frame_Transmitter::check_errors()
 {
     if (this->input.error->error_detected == HIGH) { //CONTROLE DE ERRO
-        if (this->input.error->error_state == BUSS_OFF_CODE) { //Código de erro Bus_Off
+        if (this->input.error->error_state == BUS_OFF_CODE) { //Código de erro Bus_Off
             this->state = BUS_OFF__Frame_Transmitter__;
         } 
         else {
@@ -48,23 +49,24 @@ void Frame_Transmitter::run()
             this->output->stuffing_enable = LOW;
 
             if (!this->check_errors()) {
-                if(ack == 0 && ARB_wp == 1) {
-                    this->state = ACK__Frame_Transmitter__;
-                }
-                else if(frame_ready == 1 && ARB_wp == 1) {
-                    this->output->stuffing_enable = HIGH;
-                    this->output->arb_output = FRAME[this->count];
-                    this->count++;
-                    this->output->lost_arbitration = LOW;
-
-                    this->output->eof = LOW;
-
-                    if(IDE == 0) {
-                        this->state = ARBITRATION_PHASE_STD__Frame_Transmitter__;
+                if (this->input.bit_stuffing_wr->arb_wp == HIGH) {
+                    if (this->input.decoder->ack == LOW) {
+                        this->state = ACK__Frame_Transmitter__;
                     }
-                    else {
-                        this->state = ARBITRATION_PHASE_EXT__Frame_Transmitter__;
-                    }        
+                    else if (this->input.frame_mounter->frame_ready == HIGH) {
+                        this->output->stuffing_enable = HIGH;
+                        this->output->arb_output = FRAME[this->count];
+                        this->count++;
+                        this->output->lost_arbitration = LOW;
+                        this->output->eof = LOW;
+
+                        if (IDE == 0) {
+                            this->state = ARBITRATION_PHASE_STD__Frame_Transmitter__;
+                        }
+                        else {
+                            this->state = ARBITRATION_PHASE_EXT__Frame_Transmitter__;
+                        }        
+                    }
                 }
             }
             
@@ -72,39 +74,24 @@ void Frame_Transmitter::run()
         }
         case ACK__Frame_Transmitter__:
         {
-            this->output->arb_output = ack;
+            this->output->arb_output = this->input.decoder->ack;
 
-            if(ARB_wp == 1) {
+            if (this->input.bit_stuffing_wr->arb_wp == HIGH) {
                 this->state = INIT__Frame_Transmitter__;
             }
             break;
         }
         case ARBITRATION_PHASE_STD__Frame_Transmitter__:
         {
-            if(error_detected == 1) { //CONTROLE DE ERRO
-                if(error_state == /*BUSS_OFF_CODE*/) { //Código de erro Bus_Off
-                    this->state = BUS_OFF;
-                } 
-                else {
-                    this->count = 0;
-                    stuffing_enable = 0;
-                    if (error_state == /*ACTIVE_ERROR_CODE*/) { //Código de erro ativo
-                        this->state = SEND_ACTIVE_ERROR;
-                    }
-                    else if(error_state == /*PASSIVE_ERROR_CODE*/) { //Código de erro passivo
-                        this->state = SEND_PASSIVE_ERROR;
-                    }            
-                }
-            }
-            else {
-                if (ARB_wp == 1) {
+            if (!this->check_errors()) {
+                if (this->input.bit_stuffing_wr->arb_wp == HIGH) {
                     this->output->arb_output = FRAME[this->count];
                     this->count++;
                 }
                 
                 if(new_sp == 1 && new_input != this->output->arb_output) {
-                    lost_arbitration = 1;
-                    this->state = INICIO;
+                    this->output->lost_arbitration = HIGH;
+                    this->state = INIT__Frame_Transmitter__;
                     break;
                 }
                 if(this->count == 13) {
@@ -112,7 +99,7 @@ void Frame_Transmitter::run()
                         dlc[i-15] = FRAME[i];
                     }
                     data_limit = 18 + 8*int(dlc); //ver a função pra transformar o dlc pra inteiro em C++
-                    this->state = STANDARD;
+                    this->state = STANDARD__Frame_Transmitter__;
                     break;
                 }
             }
@@ -121,30 +108,15 @@ void Frame_Transmitter::run()
         }
         case ARBITRATION_PHASE_EXT__Frame_Transmitter__: 
         {
-            if(error_detected == 1) { //CONTROLE DE ERRO
-                if(error_state == /*BUSS_OFF_CODE*/) { //Código de erro Bus_Off
-                    this->state == BUS_OFF;
-                } 
-                else {
-                    this->count = 0;
-                    stuffing_enable = 0;
-                    if (error_state == /*ACTIVE_ERROR_CODE*/) { //Código de erro ativo
-                        this->state = SEND_ACTIVE_ERROR;
-                    }
-                    else if(error_state == /*PASSIVE_ERROR_CODE*/) { //Código de erro passivo
-                        this->state = SEND_PASSIVE_ERROR;
-                    }            
-                }            
-            }
-            else {
-                if(ARB_wp == 1) {
+            if (!this->check_errors()) {
+                if(this->input.bit_stuffing_wr->arb_wp == 1) {
                     this->output->arb_output = FRAME[this->count];
                     this->count++;
                 }
                 
                 if(new_sp == 1 && new_input != this->output->arb_output) {
-                    lost_arbitration = 1;
-                    this->state = INICIO;
+                    this->output->lost_arbitration = 1;
+                    this->state = INIT__Frame_Transmitter__;
                     break;
                 }
                 
@@ -153,7 +125,7 @@ void Frame_Transmitter::run()
                         dlc[i-35] = FRAME[i];
                     }
                     data_limit = 38 + 8*int(dlc); //ver a função pra transformar o dlc pra inteiro em C++
-                    this->state = EXTENDED;
+                    this->state = EXTENDED__Frame_Transmitter__;
                     break;
                 }
             }        
@@ -161,112 +133,68 @@ void Frame_Transmitter::run()
         }
         case STANDARD__Frame_Transmitter__:
         {
-            if(error_detected == 1) { //CONTROLE DE ERRO
-                if(error_state == /*BUSS_OFF_CODE*/) { //Código de erro Bus_Off
-                    this->state == BUS_OFF;
-                } 
-                else {
-                    this->count = 0;
-                    stuffing_enable = 0;
-                    if (error_state == /*ACTIVE_ERROR_CODE*/) { //Código de erro ativo
-                        this->state = SEND_ACTIVE_ERROR;
-                    }
-                    else if(error_state == /*PASSIVE_ERROR_CODE*/) { //Código de erro passivo
-                        this->state = SEND_PASSIVE_ERROR;
-                    }            
-                }            
-            }
-            else {
-                if(ARB_wp == 1) {
+            if (!this->check_errors()) {
+                if(this->input.bit_stuffing_wr->arb_wp == 1) {
                     this->output->arb_output = FRAME[this->count];
                     this->count++;
                 }
 
                 if(new_sp == 1 && new_input != this->output->arb_output && this->count != data_limit + 16) { //this->count != ack slot
-                    this->state = BIT_ERROR;
+                    this->state = BIT_ERROR__Frame_Transmitter__;
                     break;
                 }
 
                 if(this->count == data_limit + 16) {
-                    stuffing_enable = 0;
+                    this->output->stuffing_enable = 0;
                 }
 
                 if(this->count == data_limit + 29) { //this->count != ack slot
-                    eof = 1;
-                    this->state = INICIO;
+                    this->output->eof = 1;
+                    this->state = INIT__Frame_Transmitter__;
                 }          
             }        
             break;
         }
         case EXTENDED__Frame_Transmitter__:
         {
-            if(error_detected == 1) { //CONTROLE DE ERRO
-                if(error_state == /*BUSS_OFF_CODE*/) { //Código de erro Bus_Off
-                    this->state == BUS_OFF;
-                } 
-                else {
-                    this->count = 0;
-                    stuffing_enable = 0;
-                    if (error_state == /*ACTIVE_ERROR_CODE*/) { //Código de erro ativo
-                        this->state = SEND_ACTIVE_ERROR;
-                    }
-                    else if(error_state == /*PASSIVE_ERROR_CODE*/) { //Código de erro passivo
-                        this->state = SEND_PASSIVE_ERROR;
-                    }            
-                }            
-            }
-            else {
-                if(ARB_wp == 1) {
+            if (!this->check_errors()) {
+                if(this->input.bit_stuffing_wr->arb_wp == 1) {
                     this->output->arb_output = FRAME[this->count];
                     this->count++;
                 }
 
                 if(new_sp == 1 && new_input != this->output->arb_output && this->count != data_limit + 16) { //this->count != ack slot
-                    this->state = BIT_ERROR;
+                    this->state = BIT_ERROR__Frame_Transmitter__;
                     break;
                 }
 
                 if(this->count == data_limit + 16) {
-                    stuffing_enable = 0;
+                    this->output->stuffing_enable = 0;
                 }
 
                 if(this->count == data_limit + 29) { //this->count != ack slot
                     eof = 1;
-                    this->state = INICIO;
+                    this->state = INIT__Frame_Transmitter__;
                 }
             }
             break;
         }
         case BIT_ERROR__Frame_Transmitter__:
         {
-            bit_error = 1;
-            if(error_detected == 1) { //CONTROLE DE ERRO
-                if(error_state == /*BUSS_OFF_CODE*/) { //Código de erro Bus_Off
-                    this->state == BUS_OFF;
-                } 
-                else {
-                    this->count = 0;
-                    stuffing_enable = 0;
-                    if (error_state == /*ACTIVE_ERROR_CODE*/) { //Código de erro ativo
-                        this->state = SEND_ACTIVE_ERROR;
-                    }
-                    else if(error_state == /*PASSIVE_ERROR_CODE*/) { //Código de erro passivo
-                        this->state = SEND_PASSIVE_ERROR;
-                    }            
-                }            
-            }
+            this->output->bit_error = HIGH;
+            this->check_errors();
             break;
         }
         case SEND_ACTIVE_ERROR__Frame_Transmitter__:
         {
             this->output->arb_output = 0;
 
-            if(this->count < 6 && ARB_wp == 1) {
+            if(this->count < 6 && this->input.bit_stuffing_wr->arb_wp == 1) {
                 this->count++;
             }
-            else if(this->count == 6 && ARB_wp == 1) {
+            else if(this->count == 6 && this->input.bit_stuffing_wr->arb_wp == 1) {
                 this->output->arb_output = 1;
-                this->state = INICIO;
+                this->state = INIT__Frame_Transmitter__;
             }
             break;
         }
@@ -274,12 +202,12 @@ void Frame_Transmitter::run()
         {
             this->output->arb_output = 1;
 
-            if(this->count < 6 && ARB_wp == 1) {
+            if(this->count < 6 && this->input.bit_stuffing_wr->arb_wp == 1) {
                 this->count++;
             }
-            else if(this->count == 6 && ARB_wp == 1) {
+            else if(this->count == 6 && this->input.bit_stuffing_wr->arb_wp == 1) {
                 this->output->arb_output = 1;
-                this->state = INICIO;
+                this->state = INIT__Frame_Transmitter__;
             }
             break;
         }

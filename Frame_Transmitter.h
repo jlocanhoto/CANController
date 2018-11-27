@@ -19,7 +19,8 @@ typedef enum frame_transmitter_states {
 
 typedef struct frame_transmitter_input {
     Frame_Mounter_Output* frame_mounter;
-    Bit_Stuffing_Reading_Output* bit_stuffing_rd;
+    Decoder_Output* decoder;
+    Bit_Stuffing_Writing_Output* bit_stuffing_wr;
     Error_Output* error;
 } Frame_Transmitter_Input;
 
@@ -32,7 +33,7 @@ class Frame_Transmitter {
         bool check_errors();
     public:
         Frame_Transmitter(Frame_Transmitter_Output &output);
-        void setup(Frame_Mounter_Output &frame_mounter, Bit_Stuffing_Reading_Output &bit_stuffing_rd, Error_Output &error);
+        void setup(Frame_Mounter_Output &frame_mounter, Bit_Stuffing_Writing_Output &bit_stuffing_wr, Error_Output &error, Decoder_Output &decoder);
         void run();
 };
 

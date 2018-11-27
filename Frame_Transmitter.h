@@ -27,9 +27,12 @@ class Frame_Transmitter {
     private:
         Frame_Transmitter_Input input;
         Frame_Transmitter_Output* output;
+        Frame_Transmitter_States state;
+        uint8_t count;
+        bool check_errors();
     public:
         Frame_Transmitter(Frame_Transmitter_Output &output);
-        void interconnect(Frame_Mounter_Output &frame_mounter, Bit_Stuffing_Reading_Output &bit_stuffing_rd, Error_Output &error);
+        void setup(Frame_Mounter_Output &frame_mounter, Bit_Stuffing_Reading_Output &bit_stuffing_rd, Error_Output &error);
         void run();
 };
 

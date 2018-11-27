@@ -4,6 +4,7 @@
 #include "CRC_Calculator.h"
 #include "config.h"
 #include "utils.h"
+#include "frame_positions.h"
 
 Frame_Mounter::Frame_Mounter()
 {
@@ -25,9 +26,11 @@ bool Frame_Mounter::mount(bool new_frame, Splitted_Frame &input_frame, CRC_Data 
                 reset_CRC(crc_data);
                 
                 if (input_frame.IDE == DOMINANT) {
+                    this->output->arb_limit = RTR_SSR_POS+1;
                     state = BASE_FORMAT__Frame_Mounter__;
                 }
                 else {
+                    this->output->arb_limit = RTR_EXT_POS+1;
                     state = EXTENDED_FORMAT__Frame_Mounter__;
                 }
             }
@@ -38,7 +41,7 @@ bool Frame_Mounter::mount(bool new_frame, Splitted_Frame &input_frame, CRC_Data 
             FRAME[SOF_POS] = DOMINANT; // SOF
 
             for (int i = 0; i < ID_A_SIZE; i++) { // ID
-                FRAME[ID_A_POS + i] = (input_frame.ID << i) & 0x400;
+                FRAME[ID_A_POS + i] = ((input_frame.ID << i) & 0x400) > 0;
             }
 
             FRAME[RTR_SSR_POS] = input_frame.RTR;
@@ -46,7 +49,7 @@ bool Frame_Mounter::mount(bool new_frame, Splitted_Frame &input_frame, CRC_Data 
             FRAME[r0_POS] = DOMINANT; // r0
             
             for (int i = 0; i < DLC_SIZE; i++) { // DLC
-                FRAME[DLC_POS + i] = (input_frame.PAYLOAD_SIZE << i) & 0x8;
+                FRAME[DLC_POS + i] = ((input_frame.PAYLOAD_SIZE << i) & 0x8) > 0;
             }
 
             crc_data.PT_COUNTER += (DLC_POS + DLC_SIZE);
@@ -63,6 +66,8 @@ bool Frame_Mounter::mount(bool new_frame, Splitted_Frame &input_frame, CRC_Data 
 
                 state = CRC_WAIT__Frame_Mounter__;
             }
+
+            this->output->data_limit = data_limit;
             break;
         }
         case EXTENDED_FORMAT__Frame_Mounter__:
@@ -70,14 +75,14 @@ bool Frame_Mounter::mount(bool new_frame, Splitted_Frame &input_frame, CRC_Data 
             FRAME[SOF_POS] = DOMINANT; // SOF
             
             for (int i = 0; i < ID_A_SIZE; i++) { // ID
-                FRAME[ID_A_POS + i] = (input_frame.ID << i) & 0x10000000;
+                FRAME[ID_A_POS + i] = ((input_frame.ID << i) & 0x10000000) > 0;
             }
 
             FRAME[RTR_SSR_POS] = RECESSIVE; // SRR
             FRAME[IDE_POS] = input_frame.IDE;
 
             for (int i = 0; i < ID_B_SIZE; i++) { // ID
-                FRAME[ID_B_POS + i] = (input_frame.ID << i) & 0x20000;
+                FRAME[ID_B_POS + i] = ((input_frame.ID << i) & 0x20000) > 0;
             }
 
             FRAME[RTR_EXT_POS] = input_frame.RTR; 
@@ -85,7 +90,7 @@ bool Frame_Mounter::mount(bool new_frame, Splitted_Frame &input_frame, CRC_Data 
             FRAME[r0_EXT_POS] = DOMINANT; // r0
 
             for (int i = 0; i < DLC_SIZE; i++) { // DLC
-                FRAME[DLC_EXT_POS + i] = (input_frame.PAYLOAD_SIZE << i) & 0x8;
+                FRAME[DLC_EXT_POS + i] = ((input_frame.PAYLOAD_SIZE << i) & 0x8) > 0;
             }
 
             crc_data.PT_COUNTER += (DLC_EXT_POS + DLC_SIZE);
@@ -102,12 +107,14 @@ bool Frame_Mounter::mount(bool new_frame, Splitted_Frame &input_frame, CRC_Data 
 
                 state = CRC_WAIT__Frame_Mounter__;
             }
+
+            this->output->data_limit = data_limit;
             break;
         }
         case DATA_FIELD__Frame_Mounter__:
         {
             for (int i = data_limit-1, payload_idx = 0; i >= start_data; i--, payload_idx++) { // PAYLOAD
-                FRAME[i] = (input_frame.PAYLOAD >> payload_idx) & 0x01;
+                FRAME[i] = ((input_frame.PAYLOAD >> payload_idx) & 0x01) > 0;
             }
 
             crc_data.PT_COUNTER += (data_limit - start_data);
@@ -127,14 +134,14 @@ bool Frame_Mounter::mount(bool new_frame, Splitted_Frame &input_frame, CRC_Data 
         case CRC_ACK_EOF__Frame_Mounter__:
         {
             for (int i = 0; i < CRC_SIZE; i++) {
-                FRAME[data_limit + i] = (crc_data.CRC << i) & 0x4000;
+                FRAME[data_limit + i] = ((crc_data.CRC << i) & 0x4000) > 0;
             }
 
             FRAME[data_limit + CRC_DELIM_OFFSET] = RECESSIVE; //CRC delimiter
-            FRAME[data_limit + ACK_SLOT_OFFSET] = input_frame.ACK_slot; //ACK slot
-            FRAME[data_limit + ACK_DELIM_OFFSET] = RECESSIVE; //ACK delimiter
+            FRAME[data_limit + ACK_SLOT_OFFSET] = input_frame.ACK_slot; //ACK slot            
+            FRAME[data_limit + ACK_DELIM_OFFSET] = RECESSIVE; //ACK delimiter            
 
-            for (int i = data_limit + EOF_OFFSET; i <= data_limit + EOF_OFFSET + EOF_SIZE; i++) {
+            for (int i = data_limit + EOF_OFFSET; i < data_limit + EOF_OFFSET + EOF_SIZE; i++) {
                 FRAME[i] = RECESSIVE; // EOF
             }
 

@@ -18,7 +18,7 @@ void random_frame(Splitted_Frame &frame, bool &new_frame)
         Serial.println("[INPUT FRAME]");
 
         Serial.print("ID = ");
-        Serial.println(frame.ID, DEC);
+        Serial.println(frame.ID, BIN);
 
         Serial.print("IDE = ");
         Serial.println(frame.IDE, DEC);

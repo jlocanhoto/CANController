@@ -5,6 +5,8 @@
 #include "config.h"
 #include "Application.h"
 #include "CRC_Calculator.h"
+#include "Frame_Transmitter.h"
+#include "datatypes/datatypes.h"
 
 #define SOF_POS             0
 #define ID_A_POS            1
@@ -88,11 +90,16 @@ typedef struct can_frame_ext {
     uint8_t EoF : 7;
 } CAN_Frame_Ext;
 
+typedef struct frame_mounter_input {
+    bool new_frame;
+    Splitted_Frame input_frame;
+    CRC_Data crc_data;
+} Frame_Mounter_Input;
+
 class Frame_Mounter {
     private:
         void* frame;
         bool frame_ready;
-        
     public:
         Frame_Mounter();
         bool mount(bool new_frame, Splitted_Frame &input_frame, CRC_Data &crc_data, bool* FRAME);

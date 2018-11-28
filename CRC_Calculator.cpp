@@ -49,11 +49,11 @@ void calculate_CRC(CRC_Data &crc_data, bool* PARTIAL_FR)
     }
 }
 
-void reset_CRC(CRC_Data &crc_data)
+void reset_CRC(CRC_Data* crc_data)
 {
-    crc_data.CRC = 0;
-    crc_data.PT_COUNTER = 0;
-    crc_data.bit_counter = 0;
-    crc_data.crc_ready = LOW;
-    crc_data.crc_req = LOW;
+    crc_data->CRC = 0;
+    crc_data->PT_COUNTER = 0;
+    crc_data->bit_counter = 0;
+    crc_data->crc_ready = LOW;
+    crc_data->crc_req = LOW;
 }

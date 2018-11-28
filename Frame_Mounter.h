@@ -64,24 +64,22 @@ typedef struct can_frame_ext {
 } CAN_Frame_Ext;
 
 typedef struct frame_mounter_input {
-    bool new_frame;
-    Splitted_Frame input_frame;
-    CRC_Data crc_data;
+    Application_Data* application;
+    CRC_Data* crc_interface;
 } Frame_Mounter_Input;
 
 class Frame_Mounter {
     private:
-        void* frame;
-        bool frame_ready;
         Frame_Mounter_Input input;
         Frame_Mounter_Data* output;
         Frame_Mounter_States state;
+        uint8_t start_data;
+        uint8_t data_limit;
+        bool previous_new_frame_signal;
     public:
-        Frame_Mounter();
-        //Frame_Mounter(Frame_Mounter &output);
-        //void connect_inputs(Frame_Mounter_Data &frame_mounter, Bit_Stuffing_Writing_Data &bit_stuffing_wr, Error_Data &error, Decoder_Data &decoder);
-        //void run();
-        bool mount(bool new_frame, Splitted_Frame &input_frame, bool ACK_slot, CRC_Data &crc_data, bool* FRAME);
+        Frame_Mounter(Frame_Mounter_Data &output, uint16_t max_frame_size);
+        void connect_inputs(Application_Data& application, CRC_Data &crc_interface);
+        void run();
         void print_frame();
 };
 

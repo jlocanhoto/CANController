@@ -2,6 +2,7 @@
 #define DATATYPES_H_INCLUDE
 
 #include "BTL_DataType.h"
+#include "Application_DataType.h"
 #include "Frame_Mounter_DataType.h"
 #include "Frame_Transmitter_DataType.h"
 #include "Decoder_DataType.h"

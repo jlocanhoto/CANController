@@ -1,39 +1,34 @@
-#include <Arduino.h>
 #include "Application.h"
-#include "config.h"
-#include "utils.h"
 
-void random_frame(Splitted_Frame &frame, bool &ACK_slot, bool &new_frame)
+void random_frame(Application_Data &output)
 {
-    if (new_frame == LOW) {
-        frame.ID = 0x48D;
-        frame.IDE = DOMINANT;
-        frame.RTR = DOMINANT;
-        frame.PAYLOAD = 0x01;
-        frame.PAYLOAD_SIZE = 0x01;
-        ACK_slot = RECESSIVE;
+    output.output_frame.ID = 0x48D;
+    output.output_frame.IDE = DOMINANT;
+    output.output_frame.RTR = DOMINANT;
+    output.output_frame.PAYLOAD = 0x01;
+    output.output_frame.PAYLOAD_SIZE = 0x01;
+    output.ACK_slot = RECESSIVE;
 
-        new_frame = HIGH;
+    output.new_frame = HIGH;
 
-        Serial.println("[INPUT FRAME]");
+    Serial.println("[INPUT FRAME]");
 
-        Serial.print("ID = ");
-        Serial.println(frame.ID, BIN);
+    Serial.print("ID = ");
+    Serial.println(output.output_frame.ID, BIN);
 
-        Serial.print("IDE = ");
-        Serial.println(frame.IDE, DEC);
+    Serial.print("IDE = ");
+    Serial.println(output.output_frame.IDE, DEC);
 
-        Serial.print("RTR = ");
-        Serial.println(frame.RTR, DEC);
+    Serial.print("RTR = ");
+    Serial.println(output.output_frame.RTR, DEC);
 
-        Serial.print("PAYLOAD = ");
-        print_uint64_t(frame.PAYLOAD);
-        Serial.println();
+    Serial.print("PAYLOAD = ");
+    print_uint64_t(output.output_frame.PAYLOAD);
+    Serial.println();
 
-        Serial.print("PAYLOAD_SIZE = ");
-        Serial.println(frame.PAYLOAD_SIZE, DEC);
+    Serial.print("PAYLOAD_SIZE = ");
+    Serial.println(output.output_frame.PAYLOAD_SIZE, DEC);
 
-        Serial.print("ACK_slot = ");
-        Serial.println(ACK_slot, DEC);
-    }
+    Serial.print("ACK_slot = ");
+    Serial.println(output.ACK_slot, DEC);
 }

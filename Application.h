@@ -1,8 +1,11 @@
 #ifndef APPLICATION_H_INCLUDE
 #define APPLICATION_H_INCLUDE
 
+#include <Arduino.h>
+#include "config.h"
+#include "utils.h"
 #include "datatypes/datatypes.h"
 
-void random_frame(Splitted_Frame &frame, bool &ACK_slot, bool &new_frame);
+void random_frame(Application_Data &output);
 
 #endif

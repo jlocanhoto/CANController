@@ -9,7 +9,7 @@
 #define CRC_SIZE    15
 
 void calculate_CRC(CRC_Data &crc_data, bool* PARTIAL_FR);
-void reset_CRC(CRC_Data &crc_data);
+void reset_CRC(CRC_Data* crc_data);
 uint16_t can_crc_next(uint16_t crc, uint8_t data);
 
 #endif

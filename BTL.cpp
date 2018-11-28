@@ -41,7 +41,16 @@ void logging_fotter()
     Serial.println();
 }
 #endif
-
+/*
+void BitTimingLogic::BTL_BPL_interface(BTL_Data &btl_output, Bit_Stuffing_Writing_Data &bit_stuffing_writing_output, bool bus_idle_BPL, bool sampled_bit, bool &output_bit, bool &bus_idle, bool sample_point, bool writing_point)
+{
+    btl_output.sampled_bit = sampled_bit;
+    btl_output.sample_point = sample_point;
+    btl_output.writing_point = writing_point;
+    output_bit = bit_stuffing_writing_output.output_bit;
+    bus_idle = bus_idle_BPL;
+}
+*/
 void BitTimingLogic::run(bool &tq, bool input_bit, bool write_bit, bool &sampled_bit, bool &output_bit, bool &bus_idle, bool &sample_point, bool &writing_point)
 {
     static bool prev_input_bit = RECESSIVE;

@@ -60,7 +60,7 @@ void Frame_Transmitter::run()
                         this->output->arb_output = this->input.frame_mounter->FRAME[this->count];
                         this->count++;
                         this->output->lost_arbitration = LOW;
-                        this->output->eof = LOW;
+                        this->output->EoF = LOW;
 
                         this->state = ARBITRATION_PHASE__Frame_Transmitter__;
                     }
@@ -116,7 +116,7 @@ void Frame_Transmitter::run()
                     this->output->stuffing_enable = LOW;
                 }
                 else if (this->count == this->input.frame_mounter->data_limit + EOF_OFFSET + EOF_SIZE + IFS_SIZE + 1) {
-                    this->output->eof = HIGH;
+                    this->output->EoF = HIGH;
                     this->state = INIT__Frame_Transmitter__;
                 }
             }

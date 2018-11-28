@@ -7,7 +7,7 @@ typedef struct frame_transmitter_output {
     bool bit_error;
     bool stuffing_enable;
     bool arb_output;
-    bool eof;
+    bool EoF;
 } Frame_Transmitter_Data;
 
 #endif

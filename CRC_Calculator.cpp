@@ -18,14 +18,22 @@ uint16_t can_crc_next(uint16_t crc, uint8_t data)
 
 void calculate_CRC(CRC_Data &crc_data, bool* PARTIAL_FR)
 {
-    static bool enabled = false;
     bool apply_polynomial;
+    uint8_t offset = 0;
+
+
+    if (crc_data.crc_req) {
+        offset = CRC_SIZE;
+    }
     
-    if (crc_data.bit_counter < crc_data.PT_COUNTER + CRC_SIZE)
+    if (crc_data.bit_counter < crc_data.PT_COUNTER + offset)
     {
         crc_data.CRC <<= 1;
-        crc_data.CRC |= PARTIAL_FR[crc_data.bit_counter];        
-
+        
+        if (crc_data.bit_counter < crc_data.PT_COUNTER) {
+            crc_data.CRC |= PARTIAL_FR[crc_data.bit_counter];
+        }
+        
         if (crc_data.CRC & ORDER_BIT) {
             crc_data.CRC ^= POLYNOMIAL;
         }

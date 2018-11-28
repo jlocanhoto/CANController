@@ -35,6 +35,7 @@ void Bit_Stuffing_Reading::run()
         case INIT__Bit_Stuffing_Reading__:
         {
             this->count = 0;
+            this->output->stuff_error = LOW;
 
             if (sample_point_edge) {
                 this->count++;
@@ -63,6 +64,11 @@ void Bit_Stuffing_Reading::run()
                 this->previous_bit = this->input.BTL->sampled_bit;
             }
             break;
+        }
+        case ERROR__Bit_Stuffing_Reading__:
+        {
+            this->output->stuff_error = HIGH;
+            this->state = INIT__Bit_Stuffing_Reading__;
         }
     }
 

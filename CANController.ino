@@ -25,12 +25,15 @@ uint8_t seg_pos[] = {  0 ,  0  ,  14  ,  0  ,  15  ,  0  ,  1  };
 
 BitTimingLogic BTL;
 
-
-
-typedef union data_frame {
-   bool frame[8];
-   uint8_t frame_bytes;
-} Data_Frame;
+BTL_Data btl_output;
+Application_Data application_output;
+CRC_Data frame_mouter_interface;
+CRC_Data decoder_interface;
+Bit_Stuffing_Reading_Data bit_stuffing_reading_output;
+Bit_Stuffing_Writing_Data bit_stuffing_writing_output;
+Decoder_Data decoder_output;
+Frame_Mounter_Data frame_mounter_output;
+Frame_Transmitter_Data frame_transmitter_output;
 
 void setup()
 {
@@ -60,11 +63,12 @@ void setup()
 
 void loop()
 {
+    /*
     static bool new_frame = LOW;
     static bool flag_random_frame = true;
     static bool ACK_slot;
     static Splitted_Frame input_frame;
-    static Frame_Mounter frame_mounter;
+    static Frame_Mounter frame_mounter();
     static CRC_data crc_data;
     static bool FRAME[MAX_FRAME_SIZE+CRC_SIZE+1];
 
@@ -84,7 +88,7 @@ void loop()
         Serial.println();
         delay(10000);
     }
-
+    */
     /*
     static uint8_t i = 0, j = 0;
     

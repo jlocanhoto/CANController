@@ -3,7 +3,7 @@
 #include "config.h"
 #include "utils.h"
 
-void random_frame(Splitted_Frame &frame, bool &new_frame)
+void random_frame(Splitted_Frame &frame, bool &ACK_slot, bool &new_frame)
 {
     if (new_frame == LOW) {
         frame.ID = 0x48D;
@@ -11,7 +11,7 @@ void random_frame(Splitted_Frame &frame, bool &new_frame)
         frame.RTR = DOMINANT;
         frame.PAYLOAD = 0x01;
         frame.PAYLOAD_SIZE = 0x01;
-        frame.ACK_slot = RECESSIVE;
+        ACK_slot = RECESSIVE;
 
         new_frame = HIGH;
 
@@ -34,6 +34,6 @@ void random_frame(Splitted_Frame &frame, bool &new_frame)
         Serial.println(frame.PAYLOAD_SIZE, DEC);
 
         Serial.print("ACK_slot = ");
-        Serial.println(frame.ACK_slot, DEC);
+        Serial.println(ACK_slot, DEC);
     }
 }

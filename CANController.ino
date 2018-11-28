@@ -62,16 +62,17 @@ void loop()
 {
     static bool new_frame = LOW;
     static bool flag_random_frame = true;
+    static bool ACK_slot;
     static Splitted_Frame input_frame;
     static Frame_Mounter frame_mounter;
     static CRC_data crc_data;
     static bool FRAME[MAX_FRAME_SIZE+CRC_SIZE+1];
 
     if (flag_random_frame) {
-        random_frame(input_frame, new_frame);
+        random_frame(input_frame, ACK_slot, new_frame);
         flag_random_frame = false;
     }
-    new_frame = !frame_mounter.mount(new_frame, input_frame, crc_data, FRAME);
+    new_frame = !frame_mounter.mount(new_frame, input_frame, ACK_slot, crc_data, FRAME);
     calculate_CRC(crc_data, FRAME);
     
     if (!new_frame) {

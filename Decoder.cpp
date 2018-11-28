@@ -23,7 +23,7 @@ Decoder::Decoder(Decoder_Data &output, uint16_t partial_frame_size)
 
     this->output = &output;
     this->state = INIT__Decoder__;
-    this->count = 0
+    this->count = 0;
 }
 
 void Decoder::connect_inputs(Bit_Stuffing_Reading_Data &bit_stuffing_rd, CRC_Calculator_Data &crc_calc, Frame_Transmitter_Data &frame_transmitter)
@@ -39,10 +39,10 @@ void Decoder::run()
     {
         case INIT__Decoder__:
         {
-            this->arb = 0;
+            this->arb = false;
 
             if (sampled_bit == 0) {
-                i = 0;
+                output.PT_COUNTER = 0;
                 this->state = SOF__Decoder__;
             }
             
@@ -52,12 +52,12 @@ void Decoder::run()
         {
             this->output->EoF = LOW;
             stuffing_enable = 1;
-            PARTIAL_FR[i] = sampled_bit;
-            i++;
-            count = 0;
+            output.PARTIAL_FR[output.PT_COUNTER] = sampled_bit;
+            output.PT_COUNTER++;
+            this->count = 0;
 
-            if(lost_arbitration == 1 && arb == 0) {
-                arb = 1;
+            if (this->input.frame_transmitter->lost_arbitration == HIGH && this->arb == false) {
+                this->arb = true;
             }
             
             this->state = IDENTIFIER_A__Decoder__;
@@ -65,16 +65,16 @@ void Decoder::run()
         }
         case IDENTIFIER_A__Decoder__:
         {
-            ID[count] = sampled_bit;
-            count++;
-            PARTIAL_FR[i] = sampled_bit;
-            i++;
+            ID[this->count] = sampled_bit;
+            this->count++;
+            output.PARTIAL_FR[output.PT_COUNTER] = sampled_bit;
+            output.PT_COUNTER++;
 
-            if(lost_arbitration == 1 && arb == 0) {
-                arb = 1;
+            if(this->input.frame_transmitter->lost_arbitration == HIGH && this->arb == false) {
+                this->arb = true;
             }
             
-            if(count == 11) {
+            if(this->count == 11) {
                 this->state = RTR_SRR__Decoder__;
             }
             break;
@@ -82,11 +82,11 @@ void Decoder::run()
         case RTR_SRR__Decoder__: 
         {
             rtr = sampled_bit;
-            PARTIAL_FR[i] = sampled_bit;
-            i++;
+            output.PARTIAL_FR[output.PT_COUNTER] = sampled_bit;
+            output.PT_COUNTER++;
 
-            if(lost_arbitration == 1 && arb == 0) {
-                arb = 1;
+            if(this->input.frame_transmitter->lost_arbitration == HIGH && this->arb == false) {
+                this->arb = true;
             }
 
             this->state = IDE__Decoder__;
@@ -95,11 +95,11 @@ void Decoder::run()
         case IDE__Decoder__:
         {
             ide = sampled_bit;
-            PARTIAL_FR[i] = sampled_bit;
-            i++;
+            output.PARTIAL_FR[output.PT_COUNTER] = sampled_bit;
+            output.PT_COUNTER++;
 
-            if(lost_arbitration == 1 && arb == 0) {
-                arb = 1;
+            if(this->input.frame_transmitter->lost_arbitration == HIGH && this->arb == false) {
+                this->arb = true;
             }
 
             if(ide == 1) {
@@ -112,16 +112,16 @@ void Decoder::run()
         }
         case IDENTIFIER_B__Decoder__:
         {
-            ID[count] = sampled_bit;
-            count++;
-            PARTIAL_FR[i] = sampled_bit;
-            i++;
+            ID[this->count] = sampled_bit;
+            this->count++;
+            output.PARTIAL_FR[output.PT_COUNTER] = sampled_bit;
+            output.PT_COUNTER++;
 
-            if(lost_arbitration == 1 && arb == 0) {
-                arb = 1;
+            if(this->input.frame_transmitter->lost_arbitration == HIGH && this->arb == false) {
+                this->arb = true;
             }
 
-            if(count == 30) {
+            if(this->count == 30) {
                 this->state = RTR_EXT__Decoder__;
             }
             break;
@@ -130,11 +130,11 @@ void Decoder::run()
         {
             srr = rtr;
             rtr = sampled_bit;
-            PARTIAL_FR[i] = sampled_bit;
-            i++;
+            output.PARTIAL_FR[output.PT_COUNTER] = sampled_bit;
+            output.PT_COUNTER++;
 
-            if(lost_arbitration == 1 && arb == 0) {
-                arb = 1;
+            if(this->input.frame_transmitter->lost_arbitration == HIGH && this->arb == false) {
+                this->arb = true;
             }
 
             this->state = r1__Decoder__;
@@ -142,21 +142,21 @@ void Decoder::run()
         }
         case r1__Decoder__:
         {
-            PARTIAL_FR[i] = sampled_bit;
-            i++;
+            output.PARTIAL_FR[output.PT_COUNTER] = sampled_bit;
+            output.PT_COUNTER++;
             this->state = r0__Decoder__;
             break;
         }
         case r0__Decoder__:
         {
-            PARTIAL_FR[i] = sampled_bit;
-            i++;
+            output.PARTIAL_FR[output.PT_COUNTER] = sampled_bit;
+            output.PT_COUNTER++;
 
-            if(arb == 0) {
+            if(this->arb == false) {
                 this->state = STAND_BY__Decoder__;
             }
-            else if(arb == 1) {
-                count = 0;
+            else if(this->arb == 1) {
+                this->count = 0;
                 this->state = DLC__Decoder__;
             }
             break;
@@ -171,31 +171,31 @@ void Decoder::run()
         }
         case DLC__Decoder__:
         {
-            PAYLOAD_SIZE[count] = sampled_bit;
-            count++;
-            PARTIAL_FR[i] = sampled_bit;
-            i++;
+            PAYLOAD_SIZE[this->count] = sampled_bit;
+            this->count++;
+            output.PARTIAL_FR[output.PT_COUNTER] = sampled_bit;
+            output.PT_COUNTER++;
 
-            if(count > 3 && rtr == 0) {
-                count = 0;
+            if(this->count > 3 && rtr == 0) {
+                this->count = 0;
                 PAYLOAD_SIZE = min(PAYLOAD_SIZE, 8); //ver função em c++ para fazer a conversão de binário p/ decimal e vice-versa
                 this->state = DATA_FIELD__Decoder__;
             }
-            else if(count > 3 && rtr == 1) {
-                count = 0;
+            else if(this->count > 3 && rtr == 1) {
+                this->count = 0;
                 this->state = CRC__Decoder__;
             }
             break;
         }
         case DATA_FIELD__Decoder__:
         {
-            PAYLOAD[count] = sampled_bit;
-            count++;
-            PARTIAL_FR[i] = sampled_bit;
-            i++;
+            PAYLOAD[this->count] = sampled_bit;
+            this->count++;
+            output.PARTIAL_FR[output.PT_COUNTER] = sampled_bit;
+            output.PT_COUNTER++;
 
-            if(count > (int(PAYLOAD_SIZE) * 8) - 1) { //ver função em c++ que converte binário para decimal
-                count = 0;
+            if(this->count > (int(PAYLOAD_SIZE) * 8) - 1) { //ver função em c++ que converte binário para decimal
+                this->count = 0;
                 crc_req = 1;
                 this->state = CRC__Decoder__;
             }
@@ -203,10 +203,10 @@ void Decoder::run()
         }
         case CRC__Decoder__:
         {
-            crc[count] = sampled_bit;
-            count++;
+            crc[this->count] = sampled_bit;
+            this->count++;
 
-            if(count == 15) {
+            if(this->count == 15) {
                 crc_req = 0;
                 stuffing_enable = 0;
                 this->state = CRC_delimiter__Decoder__;
@@ -248,20 +248,20 @@ void Decoder::run()
                 this->state = ERROR__Decoder__;
             }
             else if(ack_d == 1) {
-                count = 0;
+                this->count = 0;
                 this->state = EOF__Decoder__;
             }
             break;
         }
         case EOF__Decoder__:
         {
-            count++;
-            if (count < 7 && sampled_bit == 0)
+            this->count++;
+            if (this->count < 7 && sampled_bit == 0)
             {
                 this->output->format_error = 1;
                 this->state = ERROR__Decoder__;
             }
-            else if (count == 7) {
+            else if (this->count == 7) {
                 this->output->EoF = HIGH;
                 this->state = INIT__Decoder__;
             }

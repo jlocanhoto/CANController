@@ -3,18 +3,17 @@
 Bit_Stuffing_Reading::Bit_Stuffing_Reading(Bit_Stuffing_Reading_Data &output)
 {
     this->count = 0;
-    output.output_bit = RECESSIVE;
+    output.new_sampled_bit = RECESSIVE;
     this->output = &output;
     this->state = INIT__Bit_Stuffing_Reading__;
-    this.previous_bit = RECESSIVE;
-    // this->previous_wr_pt = LOW;
+    this->previous_bit = RECESSIVE;
     this->previous_sp_pt = LOW;
 }
 
 void Bit_Stuffing_Reading::connect_inputs(Decoder_Data &decoder, BTL_Data &BTL)
 {
     this->input.BTL = &BTL;
-    this->input.decoder = &decoder
+    this->input.decoder = &decoder;
 }
 
 void Bit_Stuffing_Reading::run()
@@ -28,7 +27,7 @@ void Bit_Stuffing_Reading::run()
         sample_point_edge = true;
     }
 
-    this->output.new_sampled_bit = this->input.BTL->sampled_bit
+    this->output->new_sampled_bit = this->input.BTL->sampled_bit;
 
     switch (this->state)
     {
@@ -39,14 +38,14 @@ void Bit_Stuffing_Reading::run()
 
             if (sample_point_edge) {
                 this->count++;
-                this->output.new_sample_pt = HIGH;
+                this->output->new_sample_pt = HIGH;
                 this->state = STUFF__Bit_Stuffing_Reading__;
             }
             break;
         }
         case STUFF__Bit_Stuffing_Reading__:
         {
-            this->output.new_sample_pt = LOW;
+            this->output->new_sample_pt = LOW;
 
             if (sample_point_edge) {
                 if(this->input.BTL->sampled_bit == this->previous_bit && this->count < 5) {

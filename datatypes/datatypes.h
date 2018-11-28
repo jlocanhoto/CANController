@@ -9,5 +9,6 @@
 #include "Bit_Stuffing_Reading_DataType.h"
 #include "Bit_Stuffing_Writing_DataType.h"
 #include "CRC_Calculator_DataType.h"
+#include "Splitted_Frame.h"
 
 #endif

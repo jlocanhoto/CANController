@@ -9,7 +9,7 @@ Frame_Transmitter::Frame_Transmitter(Frame_Transmitter_Data &output)
     this->state = INIT__Frame_Transmitter__;
 }
 
-void Frame_Transmitter::setup(Frame_Mounter_Data &frame_mounter, Bit_Stuffing_Writing_Data &bit_stuffing_wr, Bit_Stuffing_Reading_Data &bit_stuffing_rd, Error_Data &error, Decoder_Data &decoder)
+void Frame_Transmitter::connect_inputs(Frame_Mounter_Data &frame_mounter, Bit_Stuffing_Writing_Data &bit_stuffing_wr, Bit_Stuffing_Reading_Data &bit_stuffing_rd, Error_Data &error, Decoder_Data &decoder)
 {
     this->input.frame_mounter = &frame_mounter;
     this->input.bit_stuffing_wr = &bit_stuffing_wr;
@@ -47,7 +47,7 @@ void Frame_Transmitter::run()
         case INIT__Frame_Transmitter__:
         {
             this->count = 0;
-            this->output->arb_output = HIGH;
+            this->output->arb_output = RECESSIVE;
             this->output->stuffing_enable = LOW;
 
             if (!this->check_errors()) {

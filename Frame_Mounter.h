@@ -79,7 +79,7 @@ class Frame_Mounter {
     public:
         Frame_Mounter();
         //Frame_Mounter(Frame_Mounter &output);
-        //void setup(Frame_Mounter_Data &frame_mounter, Bit_Stuffing_Writing_Data &bit_stuffing_wr, Error_Data &error, Decoder_Data &decoder);
+        //void connect_inputs(Frame_Mounter_Data &frame_mounter, Bit_Stuffing_Writing_Data &bit_stuffing_wr, Error_Data &error, Decoder_Data &decoder);
         //void run();
         bool mount(bool new_frame, Splitted_Frame &input_frame, CRC_Data &crc_data, bool* FRAME);
         void print_frame();

@@ -33,7 +33,7 @@ class Frame_Transmitter {
         bool check_errors();
     public:
         Frame_Transmitter(Frame_Transmitter_Data &output);
-        void setup(Frame_Mounter_Data &frame_mounter, Bit_Stuffing_Writing_Data &bit_stuffing_wr, Bit_Stuffing_Reading_Data &bit_stuffing_rd, Error_Data &error, Decoder_Data &decoder);
+        void connect_inputs(Frame_Mounter_Data &frame_mounter, Bit_Stuffing_Writing_Data &bit_stuffing_wr, Bit_Stuffing_Reading_Data &bit_stuffing_rd, Error_Data &error, Decoder_Data &decoder);
         void run();
 };
 

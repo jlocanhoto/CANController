@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include "config.h"
 #include "datatypes/datatypes.h"
+#include "frame_positions.h"
 
 typedef enum decoder_states {
     INIT__Decoder__,

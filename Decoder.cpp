@@ -1,6 +1,4 @@
-#include "config.h"
 #include "Decoder.h"
-#include "frame_positions.h"
 
 Decoder::Decoder(Decoder_Data &output, uint16_t partial_frame_size)
 {

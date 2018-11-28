@@ -40,6 +40,7 @@ void Decoder::run()
         case INIT__Decoder__:
         {
             this->arb = false;
+            this->output->EoF = HIGH;
 
             if (sampled_bit == 0) {
                 output.PT_COUNTER = 0;
@@ -262,7 +263,6 @@ void Decoder::run()
                 this->state = ERROR__Decoder__;
             }
             else if (this->count == 7) {
-                this->output->EoF = HIGH;
                 this->state = INIT__Decoder__;
             }
             break;

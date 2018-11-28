@@ -1,7 +1,11 @@
 #include "config.h"
+#include "Frame_Transmitter.h"
+#include "Bit_Stuffing_Reading.h"
+#include "Bit_Stuffing_Writing.h"
+//#include "Decoder.h"
 #include "Application.h"
 #include "Frame_Mounter.h"
-#include "Frame_Transmitter.h"
+#include "Error.h"
 #include "Simulator.h"
 #include "CRC_Calculator.h"
 #include "BTL.h"
@@ -23,8 +27,6 @@ uint8_t seg_pos[] = {  0 ,  0  ,  14  ,  0  ,  15  ,  0  ,  1  };
 |     0    | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |-7 | -6 | -5 | -4 | -3 | -2 | -1 |
 *****************************************************************************/
 
-BitTimingLogic BTL;
-
 BTL_Data btl_output;
 Application_Data application_output;
 CRC_Data frame_mouter_interface;
@@ -34,6 +36,14 @@ Bit_Stuffing_Writing_Data bit_stuffing_writing_output;
 Decoder_Data decoder_output;
 Frame_Mounter_Data frame_mounter_output;
 Frame_Transmitter_Data frame_transmitter_output;
+
+BitTimingLogic BTL;
+
+Bit_Stuffing_Reading bit_stuffing_reading(bit_stuffing_reading_output);
+Bit_Stuffing_Writing bit_stuffing_writing(bit_stuffing_writing_output);
+//Decoder decoder(decoder_output, MAX_FRAME_SIZE);
+Frame_Mounter frame_mounter(frame_mounter_output, MAX_FRAME_SIZE);
+Frame_Transmitter frame_transmitter(frame_transmitter_output);
 
 void setup()
 {
@@ -59,38 +69,35 @@ void setup()
 
     BTL.setup(TQ, T1, T2, SJW);
     */
+   frame_mounter.connect_inputs(application_output, frame_mouter_interface);
 }
 
 void loop()
 {
-    /*
     static bool new_frame = LOW;
     static bool flag_random_frame = true;
     static bool ACK_slot;
-    static Splitted_Frame input_frame;
-    static Frame_Mounter frame_mounter();
     static CRC_data crc_data;
     static bool FRAME[MAX_FRAME_SIZE+CRC_SIZE+1];
 
     if (flag_random_frame) {
-        random_frame(input_frame, ACK_slot, new_frame);
+        random_frame(application_output);
         flag_random_frame = false;
     }
-    new_frame = !frame_mounter.mount(new_frame, input_frame, ACK_slot, crc_data, FRAME);
-    calculate_CRC(crc_data, FRAME);
     
-    if (!new_frame) {
-        Serial.print("FRAME = ");
-        for (int i = 0; i < MAX_FRAME_SIZE; i++)
-        {
-            Serial.print(FRAME[i], DEC);
-        }
-        Serial.println();
-        delay(10000);
+    frame_mounter.run();
+    calculate_CRC(frame_mouter_interface, frame_mounter_output.FRAME);
+    
+    Serial.print("FRAME = ");
+    for (int i = 0; i < MAX_FRAME_SIZE; i++)
+    {
+        Serial.print(frame_mounter_output.FRAME[i], DEC);
     }
-    */
-    /*
+    Serial.println();
+    
+    /*   
     static uint8_t i = 0, j = 0;
+    static bool bus_idle_BPL = HIGH;
     
     #if SIMULATION
     static bool input_bit = input[i];

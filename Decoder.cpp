@@ -28,10 +28,10 @@ Decoder::Decoder(Decoder_Data &output, uint16_t partial_frame_size)
     this->state = INIT__Decoder__;
 }
 
-void Decoder::connect_inputs(Bit_Stuffing_Reading_Data &bit_stuffing_rd, CRC_Calculator_Data &crc_calc, Frame_Transmitter_Data &frame_transmitter)
+void Decoder::connect_inputs(Bit_Stuffing_Reading_Data &bit_stuffing_rd, CRC_Data &crc_interface, Frame_Transmitter_Data &frame_transmitter)
 {
     this->input.bit_stuffing_rd = &bit_stuffing_rd;
-    this->input.crc_calc = &crc_calc;
+    this->input.crc_interface = &crc_interface;
     this->input.frame_transmitter = &frame_transmitter;
 }
 
@@ -242,7 +242,7 @@ void Decoder::run()
         }
         case CRC_delimiter__Decoder__:
         {
-            this->crc_ok = (this->CRC == this->input.crc_calc->CRC);
+            this->crc_ok = (this->CRC == this->input.crc_interface->CRC);
             this->state = ACK_slot__Decoder__;
 
             break;

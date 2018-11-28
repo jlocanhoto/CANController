@@ -28,7 +28,7 @@ typedef enum decoder_states {
 
 typedef struct decoder_input {
     Bit_Stuffing_Reading_Data* bit_stuffing_rd;
-    CRC_Calculator_Data* crc_calc;
+    CRC_Data* crc_interface;
     Frame_Transmitter_Data* frame_transmitter;
 } Decoder_Input;
 
@@ -43,7 +43,7 @@ class Decoder {
         bool crc_ok;
     public:
         Decoder(Decoder_Data &output, uint16_t partial_frame_size);
-        void connect_inputs(Bit_Stuffing_Reading_Data &bit_stuffing_rd, CRC_Calculator_Data &crc_calc, Frame_Transmitter_Data &frame_transmitter);
+        void connect_inputs(Bit_Stuffing_Reading_Data &bit_stuffing_rd, CRC_Data &crc_interface, Frame_Transmitter_Data &frame_transmitter);
         void run();
 };
 

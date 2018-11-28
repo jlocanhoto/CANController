@@ -28,6 +28,7 @@
 #define IFS_SIZE            3
 
 #define MAX_PAYLOAD_SIZE    64
+#define MAX_PAYLOAD_BYTES   8
 #define MAX_FRAME_SIZE      128
 
 #endif

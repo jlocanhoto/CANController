@@ -32,15 +32,17 @@ typedef struct decoder_input {
     Frame_Transmitter_Data* frame_transmitter;
 } Decoder_Input;
 
-class Bit_Stuffing_Writing {
+class Decoder {
     private:
         Decoder_Input input;
         Decoder_Data* output;
         Decoder_States state;
         uint8_t count;
         bool arb;
+        uint16_t CRC;
+        bool crc_ok;
     public:
-        Bit_Stuffing_Writing(Decoder_Data &output, uint16_t partial_frame_size);
+        Decoder(Decoder_Data &output, uint16_t partial_frame_size);
         void connect_inputs(Bit_Stuffing_Reading_Data &bit_stuffing_rd, CRC_Calculator_Data &crc_calc, Frame_Transmitter_Data &frame_transmitter);
         void run();
 };

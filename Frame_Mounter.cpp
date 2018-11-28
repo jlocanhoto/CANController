@@ -11,7 +11,7 @@ Frame_Mounter::Frame_Mounter()
     this->frame_ready = LOW;
 }
 
-bool Frame_Mounter::mount(bool new_frame, Splitted_Frame &input_frame, CRC_Data &crc_data, bool* FRAME)
+bool Frame_Mounter::mount(bool new_frame, Splitted_Frame &input_frame, bool ACK_slot, CRC_Data &crc_data, bool* FRAME)
 {
     static Frame_Mounter_States state = INIT__Frame_Mounter__;
     static uint8_t start_data;
@@ -138,7 +138,7 @@ bool Frame_Mounter::mount(bool new_frame, Splitted_Frame &input_frame, CRC_Data 
             }
 
             FRAME[data_limit + CRC_DELIM_OFFSET] = RECESSIVE; //CRC delimiter
-            FRAME[data_limit + ACK_SLOT_OFFSET] = input_frame.ACK_slot; //ACK slot            
+            FRAME[data_limit + ACK_SLOT_OFFSET] = ACK_slot; //ACK slot            
             FRAME[data_limit + ACK_DELIM_OFFSET] = RECESSIVE; //ACK delimiter            
 
             for (int i = data_limit + EOF_OFFSET; i < data_limit + EOF_OFFSET + EOF_SIZE; i++) {
@@ -201,7 +201,6 @@ void Frame_Mounter::mount_frame(Splitted_Frame input_frame)
         frame->EoF = B1111111;
     }
 }
-*/
 
 void Frame_Mounter::print_frame()
 {
@@ -319,3 +318,4 @@ void Frame_Mounter::print_frame()
         Serial.println(frame->EoF, BIN);
     }
 }
+*/

@@ -29,18 +29,19 @@ uint8_t seg_pos[] = {  0 ,  0  ,  14  ,  0  ,  15  ,  0  ,  1  };
 
 BTL_Data btl_output;
 Application_Data application_output;
-CRC_Data frame_mouter_interface;
-CRC_Data decoder_interface;
-Bit_Stuffing_Reading_Data bit_stuffing_reading_output;
-Bit_Stuffing_Writing_Data bit_stuffing_writing_output;
+CRC_Data frame_mouter_crc_interface;
+CRC_Data decoder_crc_interface;
+Bit_Stuffing_Reading_Data bit_stuffing_rd_output;
+Bit_Stuffing_Writing_Data bit_stuffing_wr_output;
 Decoder_Data decoder_output;
 Frame_Mounter_Data frame_mounter_output;
 Frame_Transmitter_Data frame_transmitter_output;
+Error_Data error_output;
 
 BitTimingLogic BTL;
 
-Bit_Stuffing_Reading bit_stuffing_reading(bit_stuffing_reading_output);
-Bit_Stuffing_Writing bit_stuffing_writing(bit_stuffing_writing_output);
+Bit_Stuffing_Reading bit_stuffing_rd(bit_stuffing_rd_output);
+Bit_Stuffing_Writing bit_stuffing_wr(bit_stuffing_wr_output);
 //Decoder decoder(decoder_output, MAX_FRAME_SIZE);
 Frame_Mounter frame_mounter(frame_mounter_output, MAX_FRAME_SIZE);
 Frame_Transmitter frame_transmitter(frame_transmitter_output);
@@ -69,7 +70,8 @@ void setup()
 
     BTL.setup(TQ, T1, T2, SJW);
     */
-   frame_mounter.connect_inputs(application_output, frame_mouter_interface);
+   frame_mounter.connect_inputs(application_output, frame_mouter_crc_interface);
+   frame_transmitter.connect_inputs(frame_mounter_output, bit_stuffing_wr_output, bit_stuffing_rd_output, error_output, decoder_output);
 }
 
 void loop()
@@ -86,15 +88,16 @@ void loop()
     }
     
     frame_mounter.run();
-    calculate_CRC(frame_mouter_interface, frame_mounter_output.FRAME);
-    
+    calculate_CRC(frame_mouter_crc_interface, frame_mounter_output.FRAME);
+    frame_transmitter.run();
+    /*
     Serial.print("FRAME = ");
     for (int i = 0; i < MAX_FRAME_SIZE; i++)
     {
         Serial.print(frame_mounter_output.FRAME[i], DEC);
     }
     Serial.println();
-    
+    */
     /*   
     static uint8_t i = 0, j = 0;
     static bool bus_idle_BPL = HIGH;

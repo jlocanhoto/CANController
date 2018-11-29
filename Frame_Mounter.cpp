@@ -13,6 +13,7 @@ Frame_Mounter::Frame_Mounter(Frame_Mounter_Data &output, uint16_t max_frame_size
     output.data_limit = 0;
     output.arb_limit = 0;
 
+    this->previous_new_frame_signal = LOW;
     this->output = &output;
 }
 
@@ -23,12 +24,13 @@ void Frame_Mounter::connect_inputs(Application_Data& application, CRC_Data &crc_
 }
 
 void Frame_Mounter::run()
-{    
+{
     switch(this->state)
     {
         case INIT__Frame_Mounter__:
         {
-            if (this->input.application->new_frame) {
+            if (this->previous_new_frame_signal == LOW && this->input.application->new_frame == HIGH) {
+                Serial.print("$");
                 this->output->frame_ready = LOW;
                 reset_CRC(this->input.crc_interface);
                 
@@ -157,6 +159,8 @@ void Frame_Mounter::run()
             break;
         }
     }
+    
+    this->previous_new_frame_signal = this->input.application->new_frame;
 }
 
 /*

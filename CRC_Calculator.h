@@ -8,7 +8,7 @@
 #define ORDER_BIT   0x8000
 #define CRC_SIZE    15
 
-void calculate_CRC(CRC_Data &crc_data, bool* PARTIAL_FR);
+void calculate_CRC(CRC_Data &crc_data, bool* PARTIAL_FRAME);
 void reset_CRC(CRC_Data* crc_data);
 uint16_t can_crc_next(uint16_t crc, uint8_t data);
 

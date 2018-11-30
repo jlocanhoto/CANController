@@ -8,6 +8,7 @@
 #include "Frame_Transmitter.h"
 #include "datatypes/datatypes.h"
 #include "frame_positions.h"
+#include "utils.h"
 
 enum frame_formats {
     base_format = DOMINANT,

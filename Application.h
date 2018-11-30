@@ -6,6 +6,6 @@
 #include "utils.h"
 #include "datatypes/datatypes.h"
 
-void random_frame(Application_Data &output);
+void custom_frame(Application_Data &output);
 
 #endif

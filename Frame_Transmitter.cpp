@@ -5,6 +5,13 @@
 Frame_Transmitter::Frame_Transmitter(Frame_Transmitter_Data &output)
 {
     output.lost_arbitration = LOW;
+    output.arb_output = RECESSIVE;
+    output.bit_error = LOW;
+    output.ack_error = LOW;
+    output.stuffing_enable = LOW;
+    output.EoF = HIGH;
+    this->previous_arb_wr_pt = LOW;
+    this->previous_sample_pt = LOW;
     this->output = &output;
     this->state = INIT__Frame_Transmitter__;
 }
@@ -42,16 +49,30 @@ bool Frame_Transmitter::check_errors()
 
 void Frame_Transmitter::run()
 {
+    bool writing_point_edge = false;
+    bool sample_point_edge = false;
+    
+    if (this->previous_arb_wr_pt == LOW && this->input.bit_stuffing_wr->arb_wr_pt == HIGH) {
+        writing_point_edge = true;
+        //Serial.println("FT->writing_point_edge");
+    }
+
+    if (this->previous_sample_pt == LOW && this->input.bit_stuffing_rd->new_sample_pt == HIGH) {
+        sample_point_edge = true;
+        //Serial.println("FT->writing_point_edge");
+    }
+
     switch (this->state)
     {
         case INIT__Frame_Transmitter__:
         {
+            //Serial.println("\nINIT__Frame_Transmitter__");
             this->count = 0;
             this->output->arb_output = RECESSIVE;
             this->output->stuffing_enable = LOW;
 
             if (!this->check_errors()) {
-                if (this->input.bit_stuffing_wr->arb_wr_pt == HIGH) {
+                if (writing_point_edge) {
                     if (this->input.decoder->ack == DOMINANT) {
                         this->state = ACK__Frame_Transmitter__;
                     }
@@ -71,27 +92,28 @@ void Frame_Transmitter::run()
         }
         case ACK__Frame_Transmitter__:
         {
+            Serial.println("\nACK__Frame_Transmitter__");
             this->output->arb_output = this->input.decoder->ack;
 
-            if (this->input.bit_stuffing_wr->arb_wr_pt == HIGH) {
+            if (writing_point_edge) {
                 this->state = INIT__Frame_Transmitter__;
             }
             break;
         }
         case ARBITRATION_PHASE__Frame_Transmitter__:
         {
+            //Serial.println("\nARBITRATION_PHASE__Frame_Transmitter__");
             if (!this->check_errors()) {
-                if (this->input.bit_stuffing_wr->arb_wr_pt == HIGH) {
-                    this->output->arb_output = this->input.frame_mounter->FRAME[this->count];
+                if (writing_point_edge) {
+                    this->output->arb_output = this->input.frame_mounter->FRAME[this->count];                    
                     this->count++;
                 }
                 
-                if (this->input.bit_stuffing_rd->new_sample_pt == HIGH
-                    && this->input.bit_stuffing_rd->new_sampled_bit != this->output->arb_output) {
+                if (sample_point_edge && this->input.bit_stuffing_rd->new_sampled_bit != this->output->arb_output) {
                     this->output->lost_arbitration = HIGH;
                     this->state = INIT__Frame_Transmitter__;
                 }
-                else if (this->count == this->input.frame_mounter->arb_limit + 1) {
+                else if (this->count == this->input.frame_mounter->arb_limit) {
                     this->state = DATA_TO_END_PHASE__Frame_Transmitter__;
                 }
             }
@@ -100,22 +122,30 @@ void Frame_Transmitter::run()
         }
         case DATA_TO_END_PHASE__Frame_Transmitter__:
         {
+            //Serial.println("\nDATA_TO_END_PHASE__Frame_Transmitter__");
             if (!this->check_errors()) {
-                if (this->input.bit_stuffing_wr->arb_wr_pt == HIGH) {
-                    this->output->arb_output = this->input.frame_mounter->FRAME[this->count];
+                if (writing_point_edge) {
+                    if (this->count < this->input.frame_mounter->data_limit + IFS_OFFSET) {
+                        this->output->arb_output = this->input.frame_mounter->FRAME[this->count];
+                    }
+                    else {
+                        this->output->arb_output = RECESSIVE;
+                    }
+                    
                     this->count++;
                 }
 
-                if (this->input.bit_stuffing_rd->new_sample_pt == HIGH
-                    && this->input.bit_stuffing_rd->new_sampled_bit != this->output->arb_output
+                if (sample_point_edge && this->input.bit_stuffing_rd->new_sampled_bit != this->output->arb_output
                     && this->count != this->input.frame_mounter->data_limit + ACK_SLOT_OFFSET + 1) { // this->count != ack slot
-                    
+                    //Serial.print('.');
                     this->state = BIT_ERROR__Frame_Transmitter__;
                 }
-                else if (this->count == this->input.frame_mounter->data_limit + ACK_SLOT_OFFSET + 1) {
+                else if (this->count == this->input.frame_mounter->data_limit + CRC_DELIM_OFFSET + 1) {
+                    //Serial.print(',');
                     this->output->stuffing_enable = LOW;
                 }
-                else if (this->count == this->input.frame_mounter->data_limit + EOF_OFFSET + EOF_SIZE + IFS_SIZE + 1) {
+                else if (this->count == this->input.frame_mounter->data_limit + IFS_OFFSET + IFS_SIZE + 1) {
+                    //Serial.print(';');
                     this->output->EoF = HIGH;
                     this->state = INIT__Frame_Transmitter__;
                 }
@@ -124,15 +154,17 @@ void Frame_Transmitter::run()
         }
         case BIT_ERROR__Frame_Transmitter__:
         {
+            Serial.println("\nBIT_ERROR__Frame_Transmitter__");
             this->output->bit_error = HIGH;
             this->check_errors();
             break;
         }
         case SEND_ACTIVE_ERROR__Frame_Transmitter__:
         {
+            Serial.println("\nSEND_ACTIVE_ERROR__Frame_Transmitter__");
             this->output->arb_output = DOMINANT;
 
-            if (this->input.bit_stuffing_wr->arb_wr_pt == HIGH) {
+            if (writing_point_edge) {
                 if (this->count < 6) {
                     this->count++;
                 }
@@ -145,9 +177,10 @@ void Frame_Transmitter::run()
         }
         case SEND_PASSIVE_ERROR__Frame_Transmitter__:
         {
+            Serial.println("\nSEND_PASSIVE_ERROR__Frame_Transmitter__");
             this->output->arb_output = RECESSIVE;
 
-            if (this->input.bit_stuffing_wr->arb_wr_pt == HIGH) {
+            if (writing_point_edge) {
                 if (this->count < 6) {
                     this->count++;
                 }
@@ -160,8 +193,11 @@ void Frame_Transmitter::run()
         }
         case BUS_OFF__Frame_Transmitter__:
         {
-            printf("WAIT SYSTEM RESET!!");
+            //Serial.println("\nBUS_OFF__Frame_Transmitter__");
             break;
         }
     }
+
+    this->previous_arb_wr_pt = this->input.bit_stuffing_wr->arb_wr_pt;
+    this->previous_sample_pt = this->input.bit_stuffing_rd->new_sample_pt;
 }

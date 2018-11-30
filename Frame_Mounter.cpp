@@ -1,10 +1,4 @@
-#include <Arduino.h>
 #include "Frame_Mounter.h"
-#include "Application.h"
-#include "CRC_Calculator.h"
-#include "config.h"
-#include "utils.h"
-#include "frame_positions.h"
 
 Frame_Mounter::Frame_Mounter(Frame_Mounter_Data &output, uint16_t max_frame_size)
 {

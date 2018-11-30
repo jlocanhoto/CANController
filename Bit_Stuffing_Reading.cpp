@@ -2,8 +2,10 @@
 
 Bit_Stuffing_Reading::Bit_Stuffing_Reading(Bit_Stuffing_Reading_Data &output)
 {
-    this->count = 0;
     output.new_sampled_bit = RECESSIVE;
+    output.new_sample_pt = LOW;
+
+    this->count = 0;
     this->output = &output;
     this->state = INIT__Bit_Stuffing_Reading__;
     this->previous_bit = RECESSIVE;
@@ -19,15 +21,11 @@ void Bit_Stuffing_Reading::connect_inputs(Decoder_Data &decoder, BTL_Data &BTL)
 void Bit_Stuffing_Reading::run()
 {
     bool sample_point_edge = false;
-
-    if (this->input.decoder->stuffing_enable == LOW) {
-        this->state = INIT__Bit_Stuffing_Reading__;
-    }
-    else if (this->previous_sp_pt == LOW && this->input.BTL->sample_point == HIGH) {
+    
+    if (this->previous_sp_pt == LOW && this->input.BTL->sample_point == HIGH) {
         sample_point_edge = true;
+        this->output->new_sampled_bit = this->input.BTL->sampled_bit;
     }
-
-    this->output->new_sampled_bit = this->input.BTL->sampled_bit;
 
     switch (this->state)
     {
@@ -47,14 +45,20 @@ void Bit_Stuffing_Reading::run()
         {
             this->output->new_sample_pt = LOW;
 
-            if (sample_point_edge) {
+            if (this->input.decoder->stuffing_enable == LOW) {
+                this->state = INIT__Bit_Stuffing_Reading__;
+            }
+            else if (sample_point_edge) {
                 if(this->input.BTL->sampled_bit == this->previous_bit && this->count < 5) {
                     this->count++;
                     this->output->new_sample_pt = HIGH;
                 }
-                else if (this->input.BTL->sampled_bit != this->previous_bit && this->count <= 5) {
+                else if (this->input.BTL->sampled_bit != this->previous_bit && this->count < 5) {
                     this->count = 1;
                     this->output->new_sample_pt = HIGH;
+                }
+                else if (this->input.BTL->sampled_bit != this->previous_bit && this->count == 5) {
+                    this->count = 0;
                 }
                 else if (this->input.BTL->sampled_bit == this->previous_bit && this->count == 5) {
                     this->state = ERROR__Bit_Stuffing_Reading__;

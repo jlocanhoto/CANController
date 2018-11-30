@@ -1,14 +1,15 @@
-#ifndef BIT_STUFFING_WRITING_H_INCLUDE
-#define BIT_STUFFING_WRITING_H_INCLUDE
+#ifndef DECODER_H_INCLUDE
+#define DECODER_H_INCLUDE
 
 #include <Arduino.h>
 #include "config.h"
 #include "datatypes/datatypes.h"
+#include "CRC_Calculator.h"
 #include "frame_positions.h"
+#include "utils.h"
 
 typedef enum decoder_states {
-    INIT__Decoder__,
-    SOF__Decoder__,
+    INIT_SOF__Decoder__,
     IDENTIFIER_A__Decoder__,
     RTR_SRR__Decoder__,
     IDE__Decoder__,
@@ -40,12 +41,26 @@ class Decoder {
         Decoder_States state;
         uint8_t count;
         bool arb;
-        uint16_t CRC;
         bool crc_ok;
+        bool previous_sample_pt;
+        bool EOF_signal;
+
+        bool SOF;
+        bool r0;
+        bool r1;
+        uint16_t CRC;
+        bool SRR;
+        bool CRC_delim;
+        bool ACK_slot;
+        bool ACK_delim;
+        uint8_t EoF;
+
+        bool previous_EoF_frame_mounter;
     public:
         Decoder(Decoder_Data &output, uint16_t partial_frame_size);
         void connect_inputs(Bit_Stuffing_Reading_Data &bit_stuffing_rd, CRC_Data &crc_interface, Frame_Transmitter_Data &frame_transmitter);
         void run();
+        void print_frame();
 };
 
 #endif

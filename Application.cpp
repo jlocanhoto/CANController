@@ -1,6 +1,6 @@
 #include "Application.h"
 
-void random_frame(Application_Data &output)
+void custom_frame(Application_Data &output)
 {
     output.output_frame.ID = 0x48D;
     output.output_frame.IDE = DOMINANT;

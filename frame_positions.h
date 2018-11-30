@@ -15,17 +15,22 @@
 #define DLC_EXT_POS         35
 #define DATA_FIELD_EXT_POS  39
 
+#define ID_A_SIZE           11
+#define ID_B_SIZE           18
+#define DLC_SIZE            4
+#define CRC_SIZE            15
+#define CRC_DELIM_SIZE      1
+#define ACK_SLOT_SIZE       1
+#define ACK_DELIM_SIZE      1
+#define EOF_SIZE            7
+#define IFS_SIZE            3
+
 #define CRC_DELIM_OFFSET    15
 #define ACK_SLOT_OFFSET     16
 #define ACK_DELIM_OFFSET    17
 #define EOF_OFFSET          18
+#define IFS_OFFSET          25
 
-#define DLC_SIZE            4
-#define CRC_SIZE            15
-#define ID_A_SIZE           11
-#define ID_B_SIZE           18
-#define EOF_SIZE            7
-#define IFS_SIZE            3
 
 #define MAX_PAYLOAD_SIZE    64
 #define MAX_PAYLOAD_BYTES   8

@@ -30,6 +30,8 @@ class Frame_Transmitter {
         Frame_Transmitter_Data* output;
         Frame_Transmitter_States state;
         uint8_t count;
+        bool previous_arb_wr_pt;
+        bool previous_sample_pt;
         bool check_errors();
     public:
         Frame_Transmitter(Frame_Transmitter_Data &output);

@@ -9,9 +9,7 @@ typedef struct decoder_output {
     // to Bit Stuffing on Reading
     bool stuffing_enable;
     // to CRC Calculator
-    bool crc_req;
-    bool* PARTIAL_FR;
-    uint8_t PT_COUNTER;
+    bool* PARTIAL_FRAME;
     // to Error Treatment
     bool crc_error;
     bool format_error;

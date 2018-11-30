@@ -1,3 +1,4 @@
+/*
 #include "Error.h"
 
 Error::Error(Error_Data &output)
@@ -58,3 +59,4 @@ void Error::run()
 
     }
 }
+*/

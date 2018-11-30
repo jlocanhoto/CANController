@@ -62,6 +62,7 @@ void Bit_Stuffing_Reading::run()
                 }
                 else if (this->input.BTL->sampled_bit == this->previous_bit && this->count == 5) {
                     this->state = ERROR__Bit_Stuffing_Reading__;
+                    Serial.println("ERROR__Bit_Stuffing_Reading__");
                 }
 
                 this->previous_bit = this->input.BTL->sampled_bit;

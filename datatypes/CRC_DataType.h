@@ -7,6 +7,7 @@ typedef struct CRC_data {
     uint8_t bit_counter;
     bool crc_ready;
     bool crc_req;
+    bool crc_en;
 } CRC_Data;
 
 #endif

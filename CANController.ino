@@ -27,8 +27,7 @@ uint8_t seg_pos[] = {  0 ,  0  ,  14  ,  0  ,  15  ,  0  ,  1  };
 |     0    | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |-7 | -6 | -5 | -4 | -3 | -2 | -1 |
 *****************************************************************************/
 
-String FRAME_INPUT = "0100010010011111000001000001111100100000101110101010101010101010101000011111001011101011111111";
-"0 10001001001 1 1 110000000001111001 0 0 0 0101 1101010101010101010101010 000111110101110 1 0 1 1111111"
+String FRAME_INPUT = "0000010000011111000001000001000001000001001111101111101111101111101111101111101111101111101111101111101111101111101111101110101100001011111011111111";
 
 uint8_t dlc_simulation = 7;
 bool ide_simulation = DOMINANT;
@@ -157,15 +156,14 @@ void loop()
     }
     */
 
-    /*
     if (bit_stuffing_rd_output.new_sample_pt) {
-        Serial.print(bit_stuffing_rd_output.new_sampled_bit);
+        Serial.print(" -> ");
+        Serial.println(bit_stuffing_rd_output.new_sampled_bit);
         
         if (sample_point_counter >= max_stuffing_index) {
             decoder_output.stuffing_enable = LOW;
         }
     }
-    */
     /*
     if (writing_point_counter > frame_mouter_crc_interface.PT_COUNTER) {
         delay(5000);

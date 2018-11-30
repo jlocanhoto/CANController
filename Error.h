@@ -4,7 +4,7 @@
 #define BUS_OFF_CODE        0
 #define ACTIVE_ERROR_CODE   1
 #define PASSIVE_ERROR_CODE  2
-
+/*
 #include "datatypes/datatypes.h"
 
 typedef enum error_states {
@@ -29,4 +29,5 @@ class Error {
         void connect_inputs(Bit_Stuffing_Reading_Data &Bit_Stuff_Read, Decoder_Data &decoder, Frame_Transmitter_Data &Frame_Transmitter);
         void run();
 }
+*/
 #endif

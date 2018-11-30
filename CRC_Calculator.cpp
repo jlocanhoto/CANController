@@ -18,34 +18,34 @@ uint16_t can_crc_next(uint16_t crc, uint8_t data)
 
 void calculate_CRC(CRC_Data &crc_data, bool* PARTIAL_FRAME)
 {
-    bool apply_polynomial;
     uint8_t offset = 0;
 
-
-    if (crc_data.crc_req) {
-        offset = CRC_SIZE;
-    }
-    
-    if (crc_data.bit_counter < crc_data.PT_COUNTER + offset)
-    {
-        crc_data.CRC <<= 1;
-        
-        if (crc_data.bit_counter < crc_data.PT_COUNTER) {
-            crc_data.CRC |= PARTIAL_FRAME[crc_data.bit_counter];
+    if (crc_data.crc_en) {
+        if (crc_data.crc_req) {
+            offset = CRC_SIZE;
         }
         
-        if (crc_data.CRC & ORDER_BIT) {
-            crc_data.CRC ^= POLYNOMIAL;
-        }
+        if (crc_data.bit_counter < crc_data.PT_COUNTER + offset)
+        {
+            crc_data.CRC <<= 1;
+            
+            if (crc_data.bit_counter < crc_data.PT_COUNTER) {
+                crc_data.CRC |= PARTIAL_FRAME[crc_data.bit_counter];
+            }
+            
+            if (crc_data.CRC & ORDER_BIT) {
+                crc_data.CRC ^= POLYNOMIAL;
+            }
 
-        crc_data.CRC &= 0x7FFF;
-        crc_data.bit_counter++;
-    }
-    else if (crc_data.crc_req) {
-        crc_data.crc_ready = HIGH;
-        //Serial.print("Final CRC = ");
-        //Serial.println(crc_data.CRC, BIN);
-        //delay(2000);
+            crc_data.CRC &= 0x7FFF;
+            crc_data.bit_counter++;
+        }
+        else if (crc_data.crc_req) {
+            crc_data.crc_ready = HIGH;
+            //Serial.print("Final CRC = ");
+            //Serial.println(crc_data.CRC, BIN);
+            //delay(2000);
+        }
     }
 }
 

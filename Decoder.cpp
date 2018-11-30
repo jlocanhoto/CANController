@@ -39,7 +39,10 @@ void Decoder::run()
 
     if (this->previous_sample_pt == LOW && this->input.bit_stuffing_rd->new_sample_pt == HIGH) {
         sample_point_edge = true;
-        //Serial.println("BIT_STUFF->writing_point_edge");
+    }
+
+    if (this->input.bit_stuffing_rd->stuff_error) {
+        this->state = ERROR__Decoder__;
     }
 
     if (sample_point_edge) {
@@ -47,14 +50,16 @@ void Decoder::run()
         {
             case INIT_SOF__Decoder__:
             {
-                //Serial.println("INIT__Decoder__");
+                Serial.println("INIT__Decoder__");
                 this->arb = false;
                 this->output->EoF = HIGH;
+                this->input.crc_interface->crc_en = LOW;
 
                 if (this->input.bit_stuffing_rd->new_sampled_bit == DOMINANT) {
                     reset_CRC(this->input.crc_interface);
+                    this->input.crc_interface->crc_en = HIGH;
 
-                    //Serial.println("SOF__Decoder__");
+                    Serial.println("SOF__Decoder__");
                     this->output->EoF = LOW;
                     this->output->stuffing_enable = HIGH;
                     this->output->PARTIAL_FRAME[this->input.crc_interface->PT_COUNTER] = this->input.bit_stuffing_rd->new_sampled_bit;
@@ -62,7 +67,7 @@ void Decoder::run()
                     this->count = 0;
 
                     if (this->input.frame_transmitter->lost_arbitration == HIGH && this->arb == false) {
-                        //Serial.println("\nLost Arbitration\n");
+                        Serial.println("\nLost Arbitration\n");
                         this->arb = true;
                     }
                     
@@ -74,7 +79,7 @@ void Decoder::run()
             }
             case IDENTIFIER_A__Decoder__:
             {
-                //Serial.println("IDENTIFIER_A__Decoder__");
+                Serial.println("IDENTIFIER_A__Decoder__");
                 this->output->decoded_frame.ID <<= 1;
                 this->output->decoded_frame.ID |= this->input.bit_stuffing_rd->new_sampled_bit;
                 this->count++;
@@ -92,7 +97,7 @@ void Decoder::run()
             }
             case RTR_SRR__Decoder__: 
             {
-                //Serial.println("RTR_SRR__Decoder__");
+                Serial.println("RTR_SRR__Decoder__");
                 this->output->decoded_frame.RTR = this->input.bit_stuffing_rd->new_sampled_bit;
                 this->output->PARTIAL_FRAME[this->input.crc_interface->PT_COUNTER] = this->input.bit_stuffing_rd->new_sampled_bit;
                 this->input.crc_interface->PT_COUNTER++;
@@ -106,7 +111,7 @@ void Decoder::run()
             }
             case IDE__Decoder__:
             {
-                //Serial.println("IDE__Decoder__");
+                Serial.println("IDE__Decoder__");
                 this->output->decoded_frame.IDE = this->input.bit_stuffing_rd->new_sampled_bit;
                 this->output->PARTIAL_FRAME[this->input.crc_interface->PT_COUNTER] = this->input.bit_stuffing_rd->new_sampled_bit;
                 this->input.crc_interface->PT_COUNTER++;
@@ -127,7 +132,7 @@ void Decoder::run()
             }
             case IDENTIFIER_B__Decoder__:
             {
-                //Serial.println("IDENTIFIER_B__Decoder__");
+                Serial.println("IDENTIFIER_B__Decoder__");
                 this->output->decoded_frame.ID <<= 1;
                 this->output->decoded_frame.ID |= this->input.bit_stuffing_rd->new_sampled_bit;
                 this->count++;
@@ -145,11 +150,12 @@ void Decoder::run()
             }
             case RTR_EXT__Decoder__:
             {
-                //Serial.println("RTR_EXT__Decoder__");
+                Serial.println("RTR_EXT__Decoder__");
                 this->SRR = this->output->decoded_frame.RTR;
 
                 if (this->SRR != RECESSIVE) {
                     this->output->format_error = HIGH;
+                    Serial.println("[ERROR] Format Error (SRR SIZE)");
                     this->state = ERROR__Decoder__;
                 }
                 else {
@@ -167,7 +173,7 @@ void Decoder::run()
             }
             case r1__Decoder__:
             {
-                //Serial.println("r1__Decoder__");
+                Serial.println("r1__Decoder__");
                 this->r1 = this->input.bit_stuffing_rd->new_sampled_bit;
                 this->output->PARTIAL_FRAME[this->input.crc_interface->PT_COUNTER] = this->input.bit_stuffing_rd->new_sampled_bit;
                 this->input.crc_interface->PT_COUNTER++;
@@ -176,7 +182,7 @@ void Decoder::run()
             }
             case r0__Decoder__:
             {
-                //Serial.println("r0__Decoder__");
+                Serial.println("r0__Decoder__");
                 this->r0 = this->input.bit_stuffing_rd->new_sampled_bit;
                 this->output->PARTIAL_FRAME[this->input.crc_interface->PT_COUNTER] = this->input.bit_stuffing_rd->new_sampled_bit;
                 this->input.crc_interface->PT_COUNTER++;
@@ -193,7 +199,7 @@ void Decoder::run()
             }
             case STAND_BY__Decoder__:
             {
-                //Serial.println("STAND_BY__Decoder__");
+                Serial.println("STAND_BY__Decoder__");
                 if (sample_point_edge) {
                     this->input.frame_transmitter->EoF == HIGH;
                     this->state = INIT_SOF__Decoder__;
@@ -203,7 +209,7 @@ void Decoder::run()
             }
             case DLC__Decoder__:
             {
-                //Serial.println("DLC__Decoder__");
+                Serial.println("DLC__Decoder__");
                 this->output->decoded_frame.PAYLOAD_SIZE <<= 1;
                 this->output->decoded_frame.PAYLOAD_SIZE |= this->input.bit_stuffing_rd->new_sampled_bit;
                 this->count++;
@@ -232,7 +238,7 @@ void Decoder::run()
             }
             case DATA_FIELD__Decoder__:
             {
-                //Serial.println("DATA_FIELD__Decoder__");
+                Serial.println("DATA_FIELD__Decoder__");
                 this->output->decoded_frame.PAYLOAD <<= 1;
                 this->output->decoded_frame.PAYLOAD |= this->input.bit_stuffing_rd->new_sampled_bit;
                 this->count++;
@@ -249,7 +255,7 @@ void Decoder::run()
             }
             case CRC__Decoder__:
             {
-                //Serial.println("CRC__Decoder__");
+                Serial.println("CRC__Decoder__");
                 this->CRC <<= 1;
                 this->CRC |= this->input.bit_stuffing_rd->new_sampled_bit;
                 this->count++;
@@ -262,8 +268,9 @@ void Decoder::run()
             }
             case CRC_delimiter__Decoder__:
             {
-                //Serial.println("CRC_delimiter__Decoder__");
+                Serial.println("CRC_delimiter__Decoder__");
                 if (this->input.crc_interface->crc_ready) {
+                    this->input.crc_interface->crc_en = LOW;
                     this->input.crc_interface->crc_req = LOW;
                     this->crc_ok = (this->CRC == this->input.crc_interface->CRC);
                     this->CRC_delim = RECESSIVE;
@@ -274,12 +281,13 @@ void Decoder::run()
             }
             case ACK_slot__Decoder__:
             {
-                //Serial.println("ACK_slot__Decoder__");
+                Serial.println("ACK_slot__Decoder__");
                 this->output->ack = !this->crc_ok;
                 this->ACK_slot = this->output->ack;
 
                 if (this->output->ack == RECESSIVE) {
                     this->output->crc_error = HIGH;
+                    Serial.println("[ERROR] CRC Error");
                     this->state = ERROR__Decoder__;
                 }
                 else { // this->output->ack == DOMINANT
@@ -290,7 +298,8 @@ void Decoder::run()
             }
             case ACK_delimiter__Decoder__:
             {
-                //Serial.println("ACK_delimiter__Decoder__");
+                this->output->ack = RECESSIVE;
+                Serial.println("ACK_delimiter__Decoder__");
                 bool ack_d = this->input.bit_stuffing_rd->new_sampled_bit;
 
                 if (ack_d == DOMINANT) {
@@ -306,12 +315,13 @@ void Decoder::run()
             }
             case EOF__Decoder__:
             {
-                //Serial.println("EOF__Decoder__");
+                Serial.println("EOF__Decoder__");
                 this->count++;
 
                 if (this->count < EOF_SIZE) {
                     if (this->input.bit_stuffing_rd->new_sampled_bit == DOMINANT) {
                         this->output->format_error = HIGH;
+                        Serial.println("[ERROR] Format Error (EOF SIZE)");
                         this->state = ERROR__Decoder__;
                     }
                     else {
@@ -328,7 +338,7 @@ void Decoder::run()
             }
             case ERROR__Decoder__:
             {
-                //Serial.println("ERROR__Decoder__");
+                Serial.println("ERROR__Decoder__");
                 break;
             }
         }

@@ -159,10 +159,11 @@ void loop()
     if (bit_stuffing_rd_output.new_sample_pt) {
         Serial.print(" -> ");
         Serial.println(bit_stuffing_rd_output.new_sampled_bit);
-        
+        /*
         if (sample_point_counter >= max_stuffing_index) {
             decoder_output.stuffing_enable = LOW;
         }
+        */
     }
     /*
     if (writing_point_counter > frame_mouter_crc_interface.PT_COUNTER) {

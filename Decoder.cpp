@@ -58,6 +58,7 @@ void Decoder::run()
                 if (this->input.bit_stuffing_rd->new_sampled_bit == DOMINANT) {
                     reset_CRC(this->input.crc_interface);
                     this->input.crc_interface->crc_en = HIGH;
+                    this->CRC = 0;
 
                     Serial.println("SOF__Decoder__");
                     this->output->EoF = LOW;
@@ -261,8 +262,9 @@ void Decoder::run()
                 this->count++;
 
                 if (this->count == CRC_SIZE) {
-                    this->output->stuffing_enable = 0;
+                    this->output->stuffing_enable = LOW;
                     this->state = CRC_delimiter__Decoder__;
+                    Serial.println(this->CRC, BIN);
                 }
                 break;
             }

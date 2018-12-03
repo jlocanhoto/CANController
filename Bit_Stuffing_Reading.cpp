@@ -53,19 +53,17 @@ void Bit_Stuffing_Reading::run()
                     this->count++;
                     this->output->new_sample_pt = HIGH;
                 }
-                else if (this->input.BTL->sampled_bit != this->previous_bit && this->count < 5) {
+                else if (this->input.BTL->sampled_bit != this->previous_bit && this->count <= 5) {                    
+                    if (this->count < 5) {
+                        this->output->new_sample_pt = HIGH;
+                    }
+
                     this->count = 1;
-                    this->output->new_sample_pt = HIGH;
-                }
-                else if (this->input.BTL->sampled_bit != this->previous_bit && this->count == 5) {
-                    this->count = 0;
                 }
                 else if (this->input.BTL->sampled_bit == this->previous_bit && this->count == 5) {
                     this->state = ERROR__Bit_Stuffing_Reading__;
                     Serial.println("ERROR__Bit_Stuffing_Reading__");
                 }
-
-                this->previous_bit = this->input.BTL->sampled_bit;
             }
             break;
         }
@@ -74,6 +72,12 @@ void Bit_Stuffing_Reading::run()
             this->output->stuff_error = HIGH;
             this->state = INIT__Bit_Stuffing_Reading__;
         }
+    }
+
+    if (sample_point_edge) {
+        this->previous_bit = this->input.BTL->sampled_bit;
+        Serial.print("bit stuffing reading counter = ");
+        Serial.println(this->count);
     }
 
     this->previous_sp_pt = this->input.BTL->sample_point;

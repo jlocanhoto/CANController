@@ -49,7 +49,7 @@ typedef struct can_frame_base {
 typedef struct can_frame_ext {
     uint8_t SOF : 1;
     uint16_t ID_A : 11;
-    uint8_t SSR : 1;
+    uint8_t SRR : 1;
     uint8_t IDE : 1;
     uint32_t ID_B : 18;
     uint8_t RTR : 1;

@@ -3,7 +3,7 @@
 
 #define SOF_POS             0
 #define ID_A_POS            1
-#define RTR_SSR_POS         12
+#define RTR_SRR_POS         12
 #define IDE_POS             13
 #define r0_POS              14
 #define DLC_POS             15

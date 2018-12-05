@@ -4,6 +4,7 @@ Bit_Stuffing_Reading::Bit_Stuffing_Reading(Bit_Stuffing_Reading_Data &output)
 {
     output.new_sampled_bit = RECESSIVE;
     output.new_sample_pt = LOW;
+    output.stuff_error = LOW;
 
     this->count = 0;
     this->output = &output;
@@ -76,8 +77,6 @@ void Bit_Stuffing_Reading::run()
 
     if (sample_point_edge) {
         this->previous_bit = this->input.BTL->sampled_bit;
-        Serial.print("bit stuffing reading counter = ");
-        Serial.println(this->count);
     }
 
     this->previous_sp_pt = this->input.BTL->sample_point;

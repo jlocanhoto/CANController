@@ -3,6 +3,9 @@
 
 typedef struct frame_transmitter_output {
     bool lost_arbitration;
+    bool ack_ok_rx;
+    bool ack_ok_tx;
+    bool bus_on;
     bool ack_error;
     bool bit_error;
     bool stuffing_enable;

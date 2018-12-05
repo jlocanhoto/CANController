@@ -56,18 +56,23 @@ void Bit_Stuffing_Writing::run()
                     this->output->arb_wr_pt = HIGH;
                 }
                 else if (this->input.frame_transmitter->arb_output != this->previous_bit && this->count <= 5) {
-                    this->count = 1;
-                    this->output->arb_wr_pt = HIGH;
+                    if (this->count < 5) {
+                        this->output->arb_wr_pt = HIGH;
+                    }
+
+                    this->count = 1;                    
                 }
                 else if (this->input.frame_transmitter->arb_output == this->previous_bit && this->count == 5) {
                     this->count = 0;
                     this->output->output_bit = !this->input.frame_transmitter->arb_output;
                 }
-
-                this->previous_bit = this->input.frame_transmitter->arb_output;
             }
             break;
         }
+    }
+
+    if (writing_point_edge) {
+        this->previous_bit = this->input.frame_transmitter->arb_output;
     }
 
     this->previous_wr_pt = this->input.BTL->writing_point;

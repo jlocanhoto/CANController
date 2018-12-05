@@ -6,6 +6,7 @@
 typedef struct decoder_output {
     // to Frame Transmitter
     bool ack;
+    bool ack_slot;
     // to Bit Stuffing on Reading
     bool stuffing_enable;
     // to CRC Calculator

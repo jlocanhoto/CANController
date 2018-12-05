@@ -2,16 +2,16 @@
 
 void custom_frame(Application_Data &output)
 {
-    output.output_frame.ID = 0x48D;
-    output.output_frame.IDE = DOMINANT;
+    output.output_frame.ID = 0xC0000;
+    output.output_frame.IDE = RECESSIVE;
     output.output_frame.RTR = DOMINANT;
-    output.output_frame.PAYLOAD = 0x01;
-    output.output_frame.PAYLOAD_SIZE = 0x01;
-    output.ACK_slot = RECESSIVE;
+    output.output_frame.PAYLOAD = 0xFFFFFFFFFFFFFFFF;
+    output.output_frame.PAYLOAD_SIZE = 0xF;
+    output.ACK_slot = DOMINANT;
 
     output.new_frame = HIGH;
 
-    Serial.println("[INPUT FRAME]");
+    Serial.println("[OUTPUT FRAME]");
 
     Serial.print("ID = ");
     Serial.println(output.output_frame.ID, BIN);

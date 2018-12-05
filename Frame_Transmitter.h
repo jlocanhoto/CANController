@@ -5,9 +5,12 @@
 #include "datatypes/datatypes.h"
 #include "frame_positions.h"
 
+#define BUS_OFF_LIMIT 128
+
 typedef enum frame_transmitter_states {
     INIT__Frame_Transmitter__,
     ACK__Frame_Transmitter__,
+    ACK_ERROR__Frame_Transmitter__,
     ARBITRATION_PHASE__Frame_Transmitter__,
     DATA_TO_END_PHASE__Frame_Transmitter__,
     BIT_ERROR__Frame_Transmitter__,
@@ -30,8 +33,10 @@ class Frame_Transmitter {
         Frame_Transmitter_Data* output;
         Frame_Transmitter_States state;
         uint8_t count;
+        uint8_t bus_off_counter;
         bool previous_arb_wr_pt;
         bool previous_sample_pt;
+        bool previous_ack_slot;
         bool check_errors();
     public:
         Frame_Transmitter(Frame_Transmitter_Data &output);

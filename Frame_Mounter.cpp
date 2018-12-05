@@ -19,17 +19,23 @@ void Frame_Mounter::connect_inputs(Application_Data& application, CRC_Data &crc_
 
 void Frame_Mounter::run()
 {
+    bool new_frame_edge = false;
+
+    if (this->previous_new_frame_signal == LOW && this->input.application->new_frame == HIGH) {
+        new_frame_edge = true;
+    }
+
     switch(this->state)
     {
         case INIT__Frame_Mounter__:
         {
-            if (this->previous_new_frame_signal == LOW && this->input.application->new_frame == HIGH) {
-                Serial.print("$");
+            //Serial.println("INIT__Frame_Mounter__");
+            if (new_frame_edge) {
                 this->output->frame_ready = LOW;
                 reset_CRC(this->input.crc_interface);
                 
                 if (this->input.application->output_frame.IDE == DOMINANT) {
-                    this->output->arb_limit = RTR_SSR_POS+1;
+                    this->output->arb_limit = RTR_SRR_POS+1;
                     this->state = BASE_FORMAT__Frame_Mounter__;
                 }
                 else {
@@ -41,13 +47,14 @@ void Frame_Mounter::run()
         }
         case BASE_FORMAT__Frame_Mounter__:
         {
+            //Serial.println("BASE_FORMAT__Frame_Mounter__");
             this->output->FRAME[SOF_POS] = DOMINANT; // SOF
 
             for (int i = 0; i < ID_A_SIZE; i++) { // ID
                 this->output->FRAME[ID_A_POS + i] = ((this->input.application->output_frame.ID << i) & 0x400) > 0;
             }
 
-            this->output->FRAME[RTR_SSR_POS] = this->input.application->output_frame.RTR;
+            this->output->FRAME[RTR_SRR_POS] = this->input.application->output_frame.RTR;
             this->output->FRAME[IDE_POS] = this->input.application->output_frame.IDE;
             this->output->FRAME[r0_POS] = DOMINANT; // r0
             
@@ -75,13 +82,14 @@ void Frame_Mounter::run()
         }
         case EXTENDED_FORMAT__Frame_Mounter__:
         {
+            //Serial.println("EXTENDED_FORMAT__Frame_Mounter__");
             this->output->FRAME[SOF_POS] = DOMINANT; // SOF
             
             for (int i = 0; i < ID_A_SIZE; i++) { // ID
                 this->output->FRAME[ID_A_POS + i] = ((this->input.application->output_frame.ID << i) & 0x10000000) > 0;
             }
 
-            this->output->FRAME[RTR_SSR_POS] = RECESSIVE; // SRR
+            this->output->FRAME[RTR_SRR_POS] = RECESSIVE; // SRR
             this->output->FRAME[IDE_POS] = this->input.application->output_frame.IDE;
 
             for (int i = 0; i < ID_B_SIZE; i++) { // ID
@@ -100,7 +108,7 @@ void Frame_Mounter::run()
 
             if (this->input.application->output_frame.RTR == DOMINANT) {
                 this->start_data = DATA_FIELD_EXT_POS;
-                this->data_limit = DATA_FIELD_EXT_POS + this->input.application->output_frame.PAYLOAD_SIZE * 8; //ver a função pra transformar o DLC pra inteiro em C++
+                this->data_limit = DATA_FIELD_EXT_POS + min(this->input.application->output_frame.PAYLOAD_SIZE, 8) * 8; //ver a função pra transformar o DLC pra inteiro em C++
                 this->state = DATA_FIELD__Frame_Mounter__;
             }
             else { // this->input.application->output_frame.RTR == RECESSIVE
@@ -116,11 +124,15 @@ void Frame_Mounter::run()
         }
         case DATA_FIELD__Frame_Mounter__:
         {
+            //Serial.println("DATA_FIELD__Frame_Mounter__");
             for (int i = this->data_limit-1, payload_idx = 0; i >= this->start_data; i--, payload_idx++) { // PAYLOAD
                 this->output->FRAME[i] = ((this->input.application->output_frame.PAYLOAD >> payload_idx) & 0x01) > 0;
             }
 
+            //Serial.println(this->input.crc_interface->PT_COUNTER, DEC);
+
             this->input.crc_interface->PT_COUNTER += (this->data_limit - this->start_data);
+            //Serial.println(this->input.crc_interface->PT_COUNTER, DEC);
 
             this->input.crc_interface->crc_req = HIGH;
             this->state = CRC_WAIT__Frame_Mounter__;
@@ -128,6 +140,7 @@ void Frame_Mounter::run()
         }
         case CRC_WAIT__Frame_Mounter__:
         {
+            //Serial.println("CRC_WAIT__Frame_Mounter__");
             if (this->input.crc_interface->crc_ready) {
                 this->state = CRC_ACK_EOF__Frame_Mounter__;
                 this->input.crc_interface->crc_req = LOW;
@@ -136,6 +149,7 @@ void Frame_Mounter::run()
         }
         case CRC_ACK_EOF__Frame_Mounter__:
         {
+            //Serial.println("CRC_ACK_EOF__Frame_Mounter__");
             for (int i = 0; i < CRC_SIZE; i++) {
                 this->output->FRAME[this->data_limit + i] = ((this->input.crc_interface->CRC << i) & 0x4000) > 0;
             }
@@ -187,7 +201,7 @@ void Frame_Mounter::mount_frame(Splitted_Frame this->input.application->output_f
 
         frame->ID_A = ID >> 18;
         frame->ID_B = ID & 0x3FFFF; // 0x3FFFF = 18 bits 1
-        frame->SSR = RECESSIVE;
+        frame->SRR = RECESSIVE;
         frame->r1 = DOMINANT;
 
         // common to both formats
@@ -211,114 +225,114 @@ void Frame_Mounter::print_frame()
         // base format
         CAN_Frame_Base* frame = (CAN_Frame_Base*) this->frame;
     
-        Serial.print("SOF = ");
-        Serial.println(frame->SOF, BIN);
+        //Serial.print("SOF = ");
+        //Serial.println(frame->SOF, BIN);
 
-        Serial.print("ID = ");
-        Serial.print(frame->ID, DEC);
-        Serial.print(" <=> ");
-        Serial.println(frame->ID, BIN);
+        //Serial.print("ID = ");
+        //Serial.print(frame->ID, DEC);
+        //Serial.print(" <=> ");
+        //Serial.println(frame->ID, BIN);
 
-        Serial.print("RTR = ");
-        Serial.println(frame->RTR, BIN);
+        //Serial.print("RTR = ");
+        //Serial.println(frame->RTR, BIN);
 
-        Serial.print("IDE = ");
-        Serial.println(frame->IDE, BIN);
+        //Serial.print("IDE = ");
+        //Serial.println(frame->IDE, BIN);
 
-        Serial.print("r0 = ");
-        Serial.println(frame->r0, BIN);
+        //Serial.print("r0 = ");
+        //Serial.println(frame->r0, BIN);
 
-        Serial.print("DLC = ");
-        Serial.print(frame->DLC, DEC);
-        Serial.print(" <=> ");
-        Serial.println(frame->DLC, BIN);
+        //Serial.print("DLC = ");
+        //Serial.print(frame->DLC, DEC);
+        //Serial.print(" <=> ");
+        //Serial.println(frame->DLC, BIN);
 
-        Serial.print("Data = ");
+        //Serial.print("Data = ");
         uint32_t data_low = frame->Data % 0xFFFFFFFF; 
         uint32_t data_high = (frame->Data >> 32) % 0xFFFFFFFF;
         print_uint64_t(frame->Data);
-        Serial.print(" <=> ");
-        Serial.print(data_low, BIN);
-        Serial.println(data_high, BIN);
+        //Serial.print(" <=> ");
+        //Serial.print(data_low, BIN);
+        //Serial.println(data_high, BIN);
 
-        Serial.print("CRC = ");
-        Serial.print(frame->CRC, DEC);
-        Serial.print(" <=> ");
-        Serial.println(frame->CRC, BIN);
+        //Serial.print("CRC = ");
+        //Serial.print(frame->CRC, DEC);
+        //Serial.print(" <=> ");
+        //Serial.println(frame->CRC, BIN);
 
-        Serial.print("CRC_delim = ");
-        Serial.println(frame->CRC_delim, BIN);
+        //Serial.print("CRC_delim = ");
+        //Serial.println(frame->CRC_delim, BIN);
 
-        Serial.print("ACK_slot = ");
-        Serial.println(frame->ACK_slot, BIN);
+        //Serial.print("ACK_slot = ");
+        //Serial.println(frame->ACK_slot, BIN);
 
-        Serial.print("ACK_delim = ");
-        Serial.println(frame->ACK_delim, BIN);
+        //Serial.print("ACK_delim = ");
+        //Serial.println(frame->ACK_delim, BIN);
 
-        Serial.print("EOF = ");
-        Serial.println(frame->EoF, BIN);
+        //Serial.print("EOF = ");
+        //Serial.println(frame->EoF, BIN);
     }
     else {
         // extended format
         CAN_Frame_Ext* frame = (CAN_Frame_Ext*) this->frame;
 
-        Serial.print("SOF = ");
-        Serial.println(frame->SOF, BIN);
+        //Serial.print("SOF = ");
+        //Serial.println(frame->SOF, BIN);
 
-        Serial.print("ID = ");
+        //Serial.print("ID = ");
         uint32_t id = ((uint32_t) frame->ID_A << 18) | frame->ID_B;
-        Serial.print(id, DEC);
-        Serial.print(" <=> ");
-        Serial.print(" ( ");
-        Serial.print(frame->ID_A, BIN);
-        Serial.print(" ++ ");
-        Serial.print(frame->ID_B, BIN);
-        Serial.println(" )");
+        //Serial.print(id, DEC);
+        //Serial.print(" <=> ");
+        //Serial.print(" ( ");
+        //Serial.print(frame->ID_A, BIN);
+        //Serial.print(" ++ ");
+        //Serial.print(frame->ID_B, BIN);
+        //Serial.println(" )");
 
-        Serial.print("SSR = ");
-        Serial.println(frame->SSR, BIN);
+        //Serial.print("SRR = ");
+        //Serial.println(frame->SRR, BIN);
 
-        Serial.print("RTR = ");
-        Serial.println(frame->RTR, BIN);
+        //Serial.print("RTR = ");
+        //Serial.println(frame->RTR, BIN);
 
-        Serial.print("IDE = ");
-        Serial.println(frame->IDE, BIN);
+        //Serial.print("IDE = ");
+        //Serial.println(frame->IDE, BIN);
 
-        Serial.print("r1 = ");
-        Serial.println(frame->r1, BIN);
+        //Serial.print("r1 = ");
+        //Serial.println(frame->r1, BIN);
 
-        Serial.print("r0 = ");
-        Serial.println(frame->r0, BIN);
+        //Serial.print("r0 = ");
+        //Serial.println(frame->r0, BIN);
 
-        Serial.print("DLC = ");
-        Serial.print(frame->DLC, DEC);
-        Serial.print(" <=> ");
-        Serial.println(frame->DLC, BIN);
+        //Serial.print("DLC = ");
+        //Serial.print(frame->DLC, DEC);
+        //Serial.print(" <=> ");
+        //Serial.println(frame->DLC, BIN);
 
-        Serial.print("Data = ");
+        //Serial.print("Data = ");
         uint32_t data_low = frame->Data % 0xFFFFFFFF; 
         uint32_t data_high = (frame->Data >> 32) % 0xFFFFFFFF;
         print_uint64_t(frame->Data);
-        Serial.print(" <=> ");
-        Serial.print(data_low, BIN);
-        Serial.println(data_high, BIN);
+        //Serial.print(" <=> ");
+        //Serial.print(data_low, BIN);
+        //Serial.println(data_high, BIN);
 
-        Serial.print("CRC = ");
-        Serial.print(frame->CRC, DEC);
-        Serial.print(" <=> ");
-        Serial.println(frame->CRC, BIN);
+        //Serial.print("CRC = ");
+        //Serial.print(frame->CRC, DEC);
+        //Serial.print(" <=> ");
+        //Serial.println(frame->CRC, BIN);
 
-        Serial.print("CRC_delim = ");
-        Serial.println(frame->CRC_delim, BIN);
+        //Serial.print("CRC_delim = ");
+        //Serial.println(frame->CRC_delim, BIN);
 
-        Serial.print("ACK_slot = ");
-        Serial.println(frame->ACK_slot, BIN);
+        //Serial.print("ACK_slot = ");
+        //Serial.println(frame->ACK_slot, BIN);
 
-        Serial.print("ACK_delim = ");
-        Serial.println(frame->ACK_delim, BIN);
+        //Serial.print("ACK_delim = ");
+        //Serial.println(frame->ACK_delim, BIN);
         
-        Serial.print("EOF = ");
-        Serial.println(frame->EoF, BIN);
+        //Serial.print("EOF = ");
+        //Serial.println(frame->EoF, BIN);
     }
 }
 */

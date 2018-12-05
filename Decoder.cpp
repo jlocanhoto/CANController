@@ -344,6 +344,8 @@ void Decoder::run()
                     this->state = INIT_SOF__Decoder__;
                     this->EoF <<= 1;
                     this->EoF |= RECESSIVE;
+
+                    this->print_frame();
                 }
                 break;
             }

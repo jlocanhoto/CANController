@@ -25,6 +25,8 @@ void Bit_Stuffing_Reading::run()
     
     if (this->previous_sp_pt == LOW && this->input.BTL->sample_point == HIGH) {
         sample_point_edge = true;
+        Serial.print("BSL = ");
+        Serial.println(this->input.BTL->sampled_bit);
         this->output->new_sampled_bit = this->input.BTL->sampled_bit;
     }
 

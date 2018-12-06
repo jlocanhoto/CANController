@@ -2,11 +2,11 @@
 
 void custom_frame(Application_Data &output)
 {
-    output.output_frame.ID = 0xC0000;
-    output.output_frame.IDE = RECESSIVE;
+    output.output_frame.ID = 0x411;
+    output.output_frame.IDE = DOMINANT;
     output.output_frame.RTR = DOMINANT;
-    output.output_frame.PAYLOAD = 0xFFFFFFFFFFFFFFFF;
-    output.output_frame.PAYLOAD_SIZE = 0xF;
+    output.output_frame.PAYLOAD = 0xABCDEF;
+    output.output_frame.PAYLOAD_SIZE = 0x0;
     output.ACK_slot = DOMINANT;
 
     output.new_frame = HIGH;
@@ -25,7 +25,7 @@ void custom_frame(Application_Data &output)
     Serial.print("PAYLOAD = ");
     print_uint64_t(output.output_frame.PAYLOAD);
     Serial.println();
-
+    
     Serial.print("PAYLOAD_SIZE = ");
     Serial.println(output.output_frame.PAYLOAD_SIZE, DEC);
 

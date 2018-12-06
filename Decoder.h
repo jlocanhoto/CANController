@@ -56,6 +56,7 @@ class Decoder {
         uint8_t EoF;
 
         bool previous_EoF_frame_mounter;
+        void reset_frame();
     public:
         Decoder(Decoder_Data &output, uint16_t partial_frame_size);
         void connect_inputs(Bit_Stuffing_Reading_Data &bit_stuffing_rd, CRC_Data &crc_interface, Frame_Transmitter_Data &frame_transmitter);

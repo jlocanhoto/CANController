@@ -12,6 +12,9 @@
 #include "utils.h"
 #include "datatypes/datatypes.h"
 
+#define DECODER_ONLY false
+#define ENCODER_ONLY true
+
 // sequência de bits do frame de input
 bool input[]      = {LOW , HIGH, LOW , HIGH, LOW , HIGH, LOW };
 // sequência de bits do frame de input
@@ -26,7 +29,7 @@ uint8_t seg_pos[] = {  0 ,  0  ,  14  ,  0  ,  15  ,  0  ,  1  };
 |==========|===============================|=================================|
 |     0    | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |-7 | -6 | -5 | -4 | -3 | -2 | -1 |
 *****************************************************************************/
-String FRAME_INPUT = "1111111111111111111111111111111111111111111111111111111111111111111111111111110000010000011111000001000001000001000001001111101111101111101111101111101111101111101111101111101111101111101111101111101110101100001011111011111111111111111111111111111111111111111111111111111111111111111111111111111111111111011001110010000100010101010101010101010101010101010101010101010101010101010101010100000100001010001101111111110000000111111111110110011100100001000101010101010101010101010101010101010101010101010101010101010101000001000010100011011111111";
+String FRAME_INPUT = "01100111001000001000011001011010101101111111111100000100000111110000010000010000010000010011111011111011111011111011111011111011111011111011111011111011111011111011111011101011000010111110111111111010001001001111100000100000111110010100100001010011111001101011111111";
 //String FRAME_INPUT = "10000010000011111000001000001000001000001001111101111101111101111101111101111101111101111101111101111101111101111101111101110101100001011111011111111";
 
 uint8_t dlc_simulation = 7;
@@ -96,12 +99,13 @@ void setup()
 void loop()
 {
     static bool new_frame = LOW;
-    static bool flag_custom_frame = false;
+    static bool flag_custom_frame = true;
     static bool ACK_slot;
     static CRC_data crc_data;
     static bool FRAME[MAX_FRAME_SIZE+CRC_SIZE+1];
     static uint16_t btl_counter = 0;
     static bool flag_frame_ready_logging = true;
+    static bool flag_stuffing_wr_output_logging = true;
     static uint16_t writing_point_counter = 0;
     static uint16_t sample_point_counter = 0;
 
@@ -118,9 +122,14 @@ void loop()
         //Serial.println("\nWRITING_POINT\n");
     }
     else if (btl_counter == T1) {
-        //btl_output.sampled_bit = bit_stuffing_wr_output.output_bit;
+        #if ENCODER_ONLY
+        btl_output.sampled_bit = bit_stuffing_wr_output.output_bit;
+        #endif
         //btl_output.sampled_bit = RECESSIVE /*(FRAME_INPUT[sample_point_counter] > '0')*/ & bit_stuffing_wr_output.output_bit;
+        #if DECODER_ONLY
         btl_output.sampled_bit = (FRAME_INPUT[sample_point_counter] > '0');
+        #endif
+
         btl_output.sample_point = HIGH;
 
         if (sample_point_counter < FRAME_INPUT.length()) {
@@ -131,7 +140,14 @@ void loop()
     }
     
     bit_stuffing_rd.run();
-    /*
+
+    #if DECODER_ONLY
+    decoder.run();
+    calculate_CRC(decoder_crc_interface, decoder_output.PARTIAL_FRAME);
+    //error.run();
+    #endif
+
+    #if ENCODER_ONLY
     frame_mounter.run();
     calculate_CRC(frame_mouter_crc_interface, frame_mounter_output.FRAME);
     // FRAME = 0100100011010000001000000011101101001010001111111111
@@ -146,21 +162,21 @@ void loop()
                 Serial.print(frame_mounter_output.FRAME[i], DEC);
             }
             Serial.println();
-            delay(5000);
+            
         }
     }
     
     frame_transmitter.run();
-    bit_stuffing_wr.run();
-    */
-    decoder.run();
-    calculate_CRC(decoder_crc_interface, decoder_output.PARTIAL_FRAME);
-    //error.run();
+    bit_stuffing_wr.run();    
     
     if ((frame_mounter_output.frame_ready) && (btl_output.writing_point))  {
+        if (flag_stuffing_wr_output_logging) {
+            flag_stuffing_wr_output_logging = false;
+            Serial.print("\n[BIT STUFFING WRITING] FRAME = ");
+        }
         Serial.print(bit_stuffing_wr_output.output_bit, DEC);
     }
-    
+    #endif
     /*
     if (bit_stuffing_rd_output.new_sample_pt) {
         Serial.print(bit_stuffing_rd_output.new_sampled_bit);
@@ -189,10 +205,12 @@ void loop()
         while(true);
     }
 
+    #if DECODER_ONLY
     if (sample_point_counter == FRAME_INPUT.length()) {
         sample_point_counter = 0;
         while(true);
     }
+    #endif
 
     /*
     Serial.print("FRAME = ");

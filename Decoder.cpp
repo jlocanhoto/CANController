@@ -34,6 +34,24 @@ void Decoder::connect_inputs(Bit_Stuffing_Reading_Data &bit_stuffing_rd, CRC_Dat
     this->input.frame_transmitter = &frame_transmitter;
 }
 
+void Decoder::reset_frame()
+{
+    this->SOF = 0;
+    this->output->decoded_frame.ID = 0;
+    this->SRR = 0;
+    this->output->decoded_frame.RTR = 0;
+    this->output->decoded_frame.IDE = 0;
+    this->r1 = 0;
+    this->r0 = 0;
+    this->output->decoded_frame.PAYLOAD_SIZE = 0;
+    this->output->decoded_frame.PAYLOAD = 0;
+    this->CRC = 0;
+    this->CRC_delim = 0;
+    this->ACK_slot = 0;
+    this->ACK_delim = 0;
+    this->EoF = 0;
+}
+
 void Decoder::run()
 {
     bool sample_point_edge = false;
@@ -45,7 +63,6 @@ void Decoder::run()
     if (this->input.bit_stuffing_rd->stuff_error) {
         this->state = ERROR__Decoder__;
         Serial.println("STUFF_ERROR");
-        while(true);
     }
 
     if (sample_point_edge) {
@@ -56,6 +73,7 @@ void Decoder::run()
                 //Serial.println("INIT__Decoder__");
                 this->arb = false;
                 this->output->EoF = HIGH;
+                this->reset_frame();
 
                 if (this->input.bit_stuffing_rd->new_sampled_bit == DOMINANT) {
                     reset_CRC(this->input.crc_interface);
@@ -159,8 +177,7 @@ void Decoder::run()
                     this->output->format_error = HIGH;
                     //Serial.println("[ERROR] Format Error (SRR SIZE)");
                     this->state = ERROR__Decoder__;
-                    Serial.println("FORMAT_ERROR");
-                    while(true);
+                    Serial.println("FORMAT_ERROR - SRR");
                 }
                 else {
                     this->output->decoded_frame.RTR = this->input.bit_stuffing_rd->new_sampled_bit;
@@ -274,6 +291,14 @@ void Decoder::run()
             case CRC_delimiter__Decoder__:
             {
                 //Serial.println("CRC_delimiter__Decoder__");
+                bool crc_d = this->input.bit_stuffing_rd->new_sampled_bit;
+
+                if (crc_d == DOMINANT) {
+                    this->output->format_error = HIGH;
+                    this->state = ERROR__Decoder__;
+                    Serial.println("FORMAT_ERROR - CRC DELIMITER");
+                }
+
                 if (this->input.crc_interface->crc_ready) {
                     this->input.crc_interface->crc_req = LOW;
                     this->crc_ok = (this->CRC == this->input.crc_interface->CRC);
@@ -301,24 +326,23 @@ void Decoder::run()
                     //Serial.println("[ERROR] CRC Error");
                     this->state = ERROR__Decoder__;
                     Serial.println("CRC_ERROR");
-                    while(true);
                 }
+                else {
+                    this->output->ack = RECESSIVE;
+                    this->output->ack_slot = LOW;
+                    //Serial.println("ACK_delimiter__Decoder__");
+                    bool ack_d = this->input.bit_stuffing_rd->new_sampled_bit;
 
-                this->output->ack = RECESSIVE;
-                this->output->ack_slot = LOW;
-                //Serial.println("ACK_delimiter__Decoder__");
-                bool ack_d = this->input.bit_stuffing_rd->new_sampled_bit;
-
-                if (ack_d == DOMINANT) {
-                    this->output->format_error = HIGH;
-                    this->state = ERROR__Decoder__;
-                    Serial.println("FORMAT_ERROR");
-                    while(true);
-                }
-                else { // ack_d == RECESSIVE
-                    this->ACK_delim = ack_d;
-                    this->count = 0;
-                    this->state = EOF__Decoder__;
+                    if (ack_d == DOMINANT) {
+                        this->output->format_error = HIGH;
+                        this->state = ERROR__Decoder__;
+                        Serial.println("FORMAT_ERROR - ACK DELIMITER");
+                    }
+                    else { // ack_d == RECESSIVE
+                        this->ACK_delim = ack_d;
+                        this->count = 0;
+                        this->state = EOF__Decoder__;
+                    }
                 }
                 break;
             }
@@ -332,8 +356,7 @@ void Decoder::run()
                         this->output->format_error = HIGH;
                         //Serial.println("[ERROR] Format Error (EOF SIZE)");
                         this->state = ERROR__Decoder__;
-                        Serial.println("FORMAT_ERROR");
-                        while(true);
+                        Serial.println("FORMAT_ERROR - EOF");
                     }
                     else {
                         this->EoF <<= 1;
@@ -351,7 +374,10 @@ void Decoder::run()
             }
             case ERROR__Decoder__:
             {
-                Serial.println("ERROR__Decoder__");
+                this->output->stuffing_enable = LOW;
+                this->print_frame();
+                Serial.println("State = ERROR__Decoder__");
+                while(true);
                 break;
             }
         }
